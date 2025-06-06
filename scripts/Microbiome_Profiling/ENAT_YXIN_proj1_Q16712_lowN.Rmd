@@ -1,0 +1,1114 @@
+---
+title: "YXIN_proj1_Q16712_iCAMP_TRIAL4"
+author: "ENAT/Enden_Dea_Nataya"
+date: "2025-04-29"
+output: html_document
+---
+
+### iCAMP analysis with all samples from YXIN project
+## Phylogenetic-binning based on all samples available
+
+```{r , eval=TRUE, echo=T, include=T, message=FALSE, warning=FALSE}
+
+library(here)
+
+# set optional parameters
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE, 
+                      message = FALSE,
+                      root.dir = here())
+options(scipen = 999, digits = 3)
+
+```
+
+```{r loading libraries, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+## load required packages
+library(Hmisc)
+library(phyloseq)
+library(qiime2R)
+library(tidyverse)
+library(magrittr)
+library(devtools)
+library(qiime2R)
+library(here)
+library(breakaway)
+library(DivNet)
+library(ape)
+library(vegan)
+library(ggtext)
+library(cowplot)
+library(RColorBrewer)
+library(microbiome)
+library(lme4)
+library(lmerTest)
+library(decontam)
+#library(ampvis2)
+library(glue)
+library(lubridate)
+library(DECIPHER)
+library(ensembleTax)
+#library(mEQO)
+library(ggh4x)
+library(RColorBrewer)
+library(dplyr)
+
+```
+
+``` {r project organization, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Project name
+proj = "YXIN"
+
+# create directories
+if (!dir.exists(here("results", "figures"))) dir.create(here("results", "figures"), recursive = TRUE)
+if (!dir.exists(here("results", "output_data"))) dir.create(here("results", "output_data"), recursive = TRUE)
+
+# set color vector for later use
+colorset <- c("darkblue", "darkgoldenrod1", "darkseagreen", "darkorchid", "darkolivegreen1", "lightskyblue", "darkgreen",  "khaki2", "firebrick", "brown1", "darkorange1", "cyan1", "royalblue4", "darksalmon", "darkblue", "royalblue4", "dodgerblue3", "steelblue1")
+
+```
+
+``` {r import data, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# import QIIME output and save as phyloseq object
+physeq <- qza_to_phyloseq(
+  features = here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN_table.qza"),
+  tree = here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN_rooted-tree.qza"),
+  taxonomy = here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN_silva-138-99-nb-classifier.qza"),
+  metadata =here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN@metadata_formatted.txt" ))
+
+# save phyloseq object as .rds
+write_rds(physeq, here("results", "output_data", "physeq.rds"))
+
+# check for samples in the dataset
+sample_data(physeq)
+
+```
+
+
+``` {r clean taxonomy, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+source(here("scripts", "Microbiome_Profiling", "tax_clean_updated.R"))
+
+# clean up taxonomy table using predefined function
+physeq_clean <- tax_clean(physeq, here("results", "output_data"))
+
+# save the cleaned phyloseq object as rds
+write_rds(physeq_clean, here("results", "output_data", "physeq_clean.rds"))
+
+```
+
+### Relative Proportion of bacterial and non-bacterial sequence
+
+``` {r visualize non-bacterial seq, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# physeq_clean as input for this code chunk
+psdata <- physeq_clean
+
+# Subset the data for non-bacterial seqs
+psdata_nonBac <- 
+  psdata %>%
+  tax_glom(., "Phylum") %>% # merge taxa until Phylum level
+  transform_sample_counts(., fun = function(x) x/sum(x)) %>% # normalized seq abundance
+  psmelt() %>%
+  as_tibble() %>%
+  filter(., Kingdom != "Bacteria") %>% # filter to retain only sequence from non-bacteria
+  select(Sample, Abundance, Kingdom, Phylum) %>% # select to only retain data from these columns
+  group_by(Sample, Phylum) %>% # group the data by phylum
+  summarise(rel_abund = sum(Abundance))
+
+# visualize the non-Bac seqs
+psdata_nonBac %>%
+  ggplot(aes(x = Sample, y = rel_abund, fill = Phylum)) +
+           geom_col() +
+           scale_fill_manual(name=NULL, 
+                    values = colorset) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 45, hjust = 1),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom")
+
+
+# Quick-view on the mitochondrial and chloroplast seqs
+psdata_mito_chlorop <-
+  psdata %>%
+  tax_glom(., "Family") %>%
+  transform_sample_counts(., fun = function(x) x/sum(x)) %>% # normalized seq abundance
+  psmelt() %>%
+  as_tibble() %>%
+  filter(., Kingdom == "Bacteria") %>% # filter to retain only sequence from bacteria
+  filter(grepl("Mitochondria|Chloroplast", Family)) %>%
+  group_by(Sample, Family) %>% 
+  summarise(rel_abund = sum(Abundance))
+
+# Visualize the mito_chlorop seqs
+psdata_mito_chlorop %>% 
+  ggplot(aes(x = Sample, y = rel_abund, fill = Family)) +
+           geom_col() +
+           scale_fill_manual(name=NULL, 
+                    values = colorset) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 45, hjust = 1),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom")
+
+# There are still non-Bac seqs present, while no mitochondria & chloroplast seqs were not found
+  
+```
+
+### Filter out non-Bac seqs
+
+``` {r clean on taxonomy, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Input for this code chunk: psdata
+
+# Filter out non-Bac seqs; no filtering is needed for mito_chlorop anymore. 
+psdata_tax_filtered <-
+  psdata %>%
+  subset_taxa(., grepl("Bacteria", Kingdom))
+  
+# calculate the difference in ntaxa before and after filtering
+old <- ntaxa(psdata)
+new <- ntaxa(psdata_tax_filtered)
+old - new
+
+# check removed Mitochondrial ASV counts per sample
+if(any(tax_table(psdata)[, "Family"] == "Mitochondria", na.rm = TRUE)) {
+  mito_abundances <- psdata %>%
+    subset_taxa(Family == "Mitochondria") %>%
+    psmelt() %>%
+    select(OTU, Sample, Family, Abundance) %>% 
+    mutate_if(is.character, as.factor) %>% 
+    group_by(Sample) %>% 
+    summarise(Abundance = sum(Abundance)) %>% 
+    arrange(desc(Abundance), .by_group = T)
+  
+  print(mito_abundances)
+  
+} else {
+  print("No mitochondrial taxa found in the dataset.")
+}
+
+# save unfiltered psdata
+psdata_unfiltered = psdata 
+saveRDS(object = psdata_unfiltered, file = here("results", "output_data", "psdata_unfiltered.rds")) # save unfiltered data
+
+
+```
+
+```{r clean phylogeny, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Resolve phylogeny tree if it has node more than 2 tips
+if(is.binary(phy_tree(psdata_tax_filtered)) == FALSE){
+  print("resolving phylogenetic tree")
+  phy_tree_resolved <- multi2di(phy_tree(psdata))
+  is.binary(phy_tree_resolved)
+  # merge new phy_tree object with sample_data and otu_table into new phyloseq object
+  psdata_resolved <- merge_phyloseq(otu_table(psdata_tax_filtered), tax_table(psdata_tax_filtered),
+                 sample_data(psdata_tax_filtered), phy_tree_resolved)
+}
+
+# save filted phyloseq object with resolved tree
+saveRDS(object = psdata_resolved, file = here("results", "output_data", "psdata_filtered_tree-resolved.rds"))
+
+```
+
+``` {r rarefaction curve, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# alpha rarefaction curve
+source(here("scripts", "Microbiome_Profiling", "ampvis2_internals.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rankabundance.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rarecurve.r"))
+
+# perform rarefaction using predefined function
+#show the plot
+amp_rarecurve(psdata_resolved, color = "exp_id", label = F, legend.position = "bottomright", legend = F)
+
+# save plot
+pdf(here::here("results", "figures", glue("{proj}_rarefaction_curves.pdf")), useDingbats = F, width = 7, height = 5)
+amp_rarecurve(psdata_resolved, color = "exp_id", label = F, legend.position = "bottomright", legend = F)
+dev.off()
+
+
+```
+
+```{r view mock and blank, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# extract DNA extraction blank
+psdata_blank <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, exp_id  == "blank_nc")) > 0,
+    subset_samples(psdata_resolved, exp_id  == "blank_nc")
+    )
+
+# extract mock community
+psdata_mock <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, exp_id  == "mock")) > 0,
+    subset_samples(psdata_resolved, exp_id  == "mock")
+    )
+
+saveRDS(object = psdata_mock, file =here("results", "output_data", "YXIN_proj1_Q16712_PHA_butyrate_feed_mock.rds"))
+
+```
+
+```{r remove mock and blank, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# remove blank and mock
+psdata_samples <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, !grepl("mock|blank_nc", exp_id))) > 0,
+    subset_samples(psdata_resolved, !grepl("mock|blank_nc", exp_id))
+  )
+  
+```
+
+```{r filter on abundance, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Transform seqs count into relative abundance
+psdata_rel <- transform_sample_counts(psdata_samples, fun = function(x) x/sum(x))
+
+# total sequence sum
+total_sum = sum(sample_sums(psdata_samples))
+print(total_sum)
+
+# continue downstream analysis with abundance filter that retains ASVs with at least 0.1% of total read abundance -> keeps above 99% abundance when removing rare data
+# This to choose the threshold of minimum rel abundance of seqs 
+psdata_0.01pct <- prune_taxa(taxa_sums(psdata_rel) > 0.0001, psdata_samples)
+psdata_0.05pct <- prune_taxa(taxa_sums(psdata_rel) > 0.0005, psdata_samples)
+psdata_0.1pct <- prune_taxa(taxa_sums(psdata_rel) > 0.001, psdata_samples)
+psdata_1pct <- prune_taxa(taxa_sums(psdata_rel) > 0.01, psdata_samples)
+
+# Calculate how many reads remained after applying each threshold
+sum(sample_sums(psdata_0.01pct)/total_sum*100) #99.7%
+sum(sample_sums(psdata_0.05pct)/total_sum*100) #98.6%
+sum(sample_sums(psdata_0.1pct)/total_sum*100) #97.4 %
+sum(sample_sums(psdata_1pct)/total_sum*100) #84.9%
+
+# We select psdata_0.51pct as it retains 98.6% reads in the dataset
+
+```
+
+``` {r prepare data for picrust2, eval=F}
+
+# convert feature table into df --> tibble
+biom_test <-
+  psdata_0.05pct %>%
+  otu_table() %>%
+  data.frame(rownames = 1) %>%
+  as_tibble()
+
+# save as biomformat
+biomformat::write_biom(biom_test, here("results", "output_data", glue("{proj}_otu_table_psdata_0.05pct.biom")))
+
+```
+
+### Low N sub-experiment downstream analysis
+
+``` {r prepare Low_N samples, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# select only samples from lowN condition
+psdata_lowN <-
+    prune_taxa(
+      taxa_sums(
+        subset_samples(psdata_0.05pct, condition == "Low_N"))>0, 
+        subset_samples(psdata_0.05pct, condition == "Low_N"))
+
+
+# create relative abundance phyloseq objects
+psdata_lowN_rel <-
+  transform_sample_counts(psdata_lowN, function(x) x/sum(x))
+
+# melt the phyloseq object into a df-like structure
+ps_lowN <- psmelt(psdata_lowN)
+
+
+```
+
+```{r alpha diversity rarefy, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+source(here("scripts", "Microbiome_Profiling", "avgrarefy.r"))
+
+# create substrate frequency matrix
+YXIN_matrix <- as(t(otu_table(psdata_lowN)), "matrix")
+
+# determine minimal sample depth
+min_sample <- min(sample_sums(psdata_lowN))
+
+# rarefy taking means of 100 iterations
+seed <- set.seed(711)
+YXIN_matrix_rarefy_table <-
+  avgrarefy(YXIN_matrix, min_sample, iteration = 100, seed)
+
+# create phyloseq object with rarefied data
+YXIN_matrix_rare <- psdata_lowN # copying psdata_genus pyhiloseq as YXIN_matrix_rare
+otu_rare <- otu_table(data.frame(t(YXIN_matrix_rarefy_table)), taxa_are_rows = TRUE)
+otu_table(YXIN_matrix_rare) <- otu_rare # replace old otu_table with rarefied data
+
+```
+
+
+## Downstream analysis for all samples in Low N condition
+
+### Alpha diversity
+
+``` {r alpha diversity, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# calculate alpha diversity: richness & Shannon on genus level
+psdata_genus <- psdata_lowN %>%
+  tax_glom(., "Genus")
+
+# rarefy
+alpha <- estimate_richness(psdata_genus, measures = c("observed", "Shannon", "Chao1", "Simpson"))
+alpha$Sample <- row.names(alpha) # add additional "Sample" colomn to help for diversity x metadata merging
+
+# preparing metadata for the samples
+metadata <-
+  sample_data(psdata_genus) %>%
+  data.frame() %>%
+  as_tibble() %>%
+  mutate(Sample = sample.names(psdata_genus)) %>%
+  select(Sample, everything())
+
+# merge diversity matrix with metadata
+alpha2 <- inner_join(metadata, alpha, by = "Sample") %>%
+  mutate(sludge_source = factor(sludge_source, levels = c("Bath", "Almere")))
+
+# plot alpha diversity
+Chao1 <- 
+alpha2 %>% 
+  mutate(sludge_source = factor(sludge_source, levels = c("Bath", "Almere"))) %>% 
+ggplot(aes(x=time, y=Chao1, color = substrate, fill = substrate)) +
+  geom_point(aes(fill = substrate,
+                 color = substrate,
+                 shape = factor(replicate)),
+                 size = 2, show.legend = F) + 
+    geom_line(aes(group = interaction(replicate, substrate), 
+                 color = substrate),
+                 linewidth = 1,alpha=0.5, show.legend = F) + 
+  scale_color_manual(values = c("red", "blue")) +
+  scale_fill_manual(values = c("red", "blue")) +
+  scale_y_continuous(limits = c(150,NA)) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(#legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        #axis.ticks.x = element_blank(), 
+        strip.background = element_rect(fill="white", colour = "white"),
+        axis.title.y = element_text(hjust = 0.5),
+        strip.placement = "outside",
+        legend.position = "bottom",
+        panel.border = element_rect(colour = "black", fill = NA)) +
+  labs(y = expression("Genus Chao1"),
+       x = NULL) +
+  theme(axis.text.x = element_text(hjust = 0.5)) +
+  ggrepel::geom_text_repel(aes(label = ifelse(replicate == 1 & time == "48h", substrate, "")), 
+                           size = 3, force_pull = 0, nudge_y = -10, nudge_x = 0.1, min.segment.length = 10, show.legend = F) +
+  theme(strip.text = element_text(face = "bold", size = 12, hjust = 0)) +
+  facet_nested(~ sludge_source, scales = "free", space = "free_x")
+
+
+# print Chao1 Genus
+print(Chao1)
+
+# plot alpha diversity
+Shannon <- 
+alpha2 %>% 
+  mutate(sludge_source = factor(sludge_source, levels = c("Bath", "Almere"))) %>% 
+ggplot(aes(x=time, y=Shannon, color = substrate, fill = substrate)) +
+  geom_point(aes(shape = factor(replicate), 
+                 fill = substrate,
+                 color = substrate), 
+             size = 2, show.legend = T) + 
+    geom_line(aes(group = interaction(replicate, substrate), 
+                 color = substrate)
+                 , linewidth = 1,alpha=0.5, show.legend = F) + 
+  scale_color_manual(values = c("red", "blue")) +
+  scale_fill_manual(values = c("red", "blue")) +
+  scale_shape_discrete(name = "replicate",) +
+  #scale_y_continuous(limits = c(0,NA)) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(#legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        #axis.ticks.x = element_blank(), 
+        strip.background = element_rect(fill="white", colour = "white"),
+        axis.title.y = element_text(hjust = 0.5),
+        strip.placement = "outside",
+        legend.position = "bottom",
+        panel.border = element_rect(colour = "black", fill = NA)) +
+  labs(y = expression("Shannon diversity H' (Genus level)"),
+       x = NULL) +
+  theme(axis.text.x = element_text(hjust = 0.5)) +
+  ggrepel::geom_text_repel(aes(label = ifelse(replicate == 1 & time == "48h", substrate, "")), 
+                           size = 3, force_pull = 0, nudge_y = 0.3, nudge_x = 0.1, min.segment.length = 10,
+                           show.legend = F) +
+  theme(strip.text = element_text(face = "bold", size = 12, hjust = 0)) +
+  facet_nested(~ sludge_source, scales = "free", space = "free_x")
+
+print(Shannon)
+
+# create plot
+prow = 
+  plot_grid(
+  plot_grid(Chao1 + theme(legend.position = "none"), 
+            Shannon + theme(legend.position = "none"),
+                   align = "hv",
+                   labels = c("A", "B"),
+                   hjust = -1, 
+                   nrow = 1),
+  get_legend(Shannon), 
+  nrow = 2 , 
+  rel_heights = c(5, 1))
+
+
+# show plot
+prow
+
+# save figure
+ggsave(prow, filename = here("results", "figures", glue("{proj}_plot_alpha_div.pdf")), width = 7, height = 5)
+
+```
+
+#### Barplots of genus level taxonomy
+```{r plot_bar all genera, echo=FALSE, fig.width=8, fig.height=10}
+
+# melt the phyloseq object into a df-like structure
+ps_genus <- psmelt(psdata_genus)
+
+
+# count n genera n = 426
+ps_genus %>% 
+  as_tibble() %>% 
+  mutate(Genus = factor(Genus)) %>% 
+  pull(Genus) %>% 
+  levels() %>% 
+  length()
+
+# Define a function to find the first non-matching column
+
+# Use rowwise and mutate to apply the function
+ps_Genus_taxlabel = ps_genus %>% 
+  as_tibble() %>% 
+  mutate(across(everything(),  ~str_replace_all(., ",", "."))) %>% 
+  mutate(across(where(~ all(grepl("^-?\\d*\\.?\\d*$", .))), as.numeric)) %>% 
+  select(Sample, Abundance, paper_id:Genus) %>%
+  rowwise() %>%
+  mutate(tax_label = case_when(
+    grepl("\\d", Genus) ~ {
+      first_non_numeric <- case_when(
+        !grepl("\\d", Family) ~ paste(Family, Genus, sep = " "),
+        !grepl("\\d", Order) ~ paste(Order, Genus, sep = " "),
+        !grepl("\\d", Class) ~ paste(Class, Genus, sep = " "),
+        !grepl("\\d", Phylum) ~ paste(Phylum, Genus, sep = " "),
+        !grepl("\\d", Kingdom) ~ paste(Kingdom, Genus, sep = " "),
+        TRUE ~ NA_character_
+      )
+      first_non_numeric
+    },
+    TRUE ~ Genus
+  ))
+
+Genus_abundances <- ps_Genus_taxlabel %>% 
+  mutate(Sample_nr = str_sub(Sample, start = 1, end = 2)) %>% 
+  group_by_at(vars(Sample, Sample_nr, sludge_source, substrate, replicate,exp_id, time, tax_label)) %>% 
+  summarise(rel_abund = sum(Abundance), .groups = "drop") %>%
+  group_by(Sample) %>% 
+  mutate(mean_rel_abund = rel_abund/sum(rel_abund)*100) %>% 
+  ungroup() %>% 
+  group_by(Sample, tax_label) %>% 
+  mutate(tax_label = str_replace(tax_label, "(.*)_unclassified", "Unclassified *\\1*"),
+         tax_label = str_replace(tax_label, "^(\\S*)$", "*\\1*"))
+
+# Reduce genera to lower number (at least 3%, or else called other)
+Genus_pool <- Genus_abundances %>% 
+  group_by(tax_label) %>% 
+  summarise(pool = max(mean_rel_abund) < 3, 
+            mean = mean(mean_rel_abund), 
+            .groups = "drop")
+
+# define a color vector using brewer.pal and colorset
+colvec = c(brewer.pal(8,"Dark2"),brewer.pal(8,"Set2"),brewer.pal(8,"Accent"),brewer.pal(8,"Paired"),brewer.pal(12,"Set3"),brewer.pal(9,"Set1"), brewer.pal(9,"YlGnBu"), colorset)
+
+# name the taxon colors
+inner_join(Genus_abundances, Genus_pool, by="tax_label") %>% 
+  mutate(tax_label = if_else(pool, "Other max.<3%", tax_label)) %>% 
+  group_by(tax_label) %>%
+  summarise(mean_rel_abund = sum(mean_rel_abund), 
+            median = median(mean),
+            .groups = "drop") %>% 
+  mutate(tax_label = factor(tax_label), 
+         tax_label = fct_reorder(tax_label, median, .desc = T)) %>% 
+  arrange(desc(median)) %>% pull(tax_label) %>% unique() -> names(colvec)
+
+colvec["Other max.<3%"] <- "#D3D3D3"
+
+# reshape plot data
+plot_data <-
+inner_join(Genus_abundances, Genus_pool, by="tax_label") %>% 
+  mutate(tax_label = if_else(pool, "Other max.<3%", tax_label)) %>% 
+  # mutate(Sample = if_else(grepl(".*[^0-9][0-9]{2}$", Sample),
+  #                          Sample,
+  #                          str_c(str_sub(Sample, end = -2),"0", str_sub(Sample, -1)))) %>% 
+  group_by(Sample, Sample_nr, sludge_source, replicate, substrate, time, tax_label) %>% 
+  summarise(mean_rel_abund = sum(mean_rel_abund), 
+            mean = min(mean),
+            .groups = "drop") %>% 
+  mutate(tax_label = factor(tax_label), 
+         tax_label = fct_reorder(tax_label, mean, .desc = T)) 
+
+
+
+# plot the data per sample
+plot_Genus = 
+  plot_data %>% 
+ggplot(aes(x=time, y = mean_rel_abund, fill = tax_label)) +
+  geom_col() +
+  scale_fill_manual(name=NULL, 
+                    values = colvec) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 0, hjust = 0.5),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom",
+        strip.background = element_rect(colour = "white"),
+        strip.text = element_text(face = "bold")) +
+  guides(fill = guide_legend(nrow=12))
+  
+
+# print plot  
+gg_Genus = plot_Genus + facet_nested_wrap(~sludge_source + replicate + substrate, ncol=4,  scales = "free")
+gg_Genus
+
+# save plots
+ggsave(plot = gg_Genus, filename = here("results", "figures", glue("{proj}_barplot_all_Genus_reactorsOnly.pdf")), width = 8, height = 6)
+
+```
+
+```{r plot_bars_example_for_paper}
+
+# plot data per timepoint, average over replicates
+average_data = 
+  plot_data %>% 
+  group_by(sludge_source, substrate, time, tax_label) %>% 
+  summarise(mean_rel_abund = mean(mean_rel_abund), sd = sd(mean_rel_abund)) 
+
+# predefined function to make plot
+plot_bars = function(data)  {
+  
+plot =   
+ggplot(data = data, aes(x=time, y = mean_rel_abund, fill = tax_label)) +
+  geom_col() +
+  scale_fill_manual(name=NULL, 
+                    values = colvec) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 0, hjust = 0.5),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom",
+        strip.background = element_rect(colour = "white"),
+        strip.text = element_text(face = "bold")) +
+  guides(fill = guide_legend(nrow=12)) + 
+  facet_nested_wrap(~sludge_source + substrate, 
+                    ncol=4,  scales = "free")
+
+return(plot)
+}  
+
+# create plot for average data
+average_plot = plot_bars(data = average_data)
+print(average_plot)
+
+ggsave(plot = average_plot, 
+       filename = here("results", "figures", glue("{proj}_barplot_replicate_average_Genus.pdf")), width = 8, height = 6)
+
+
+```
+
+```{r plot_bars_phylum_level}
+
+# agglomerate taxa to phylum level
+psdata_phylum <- psdata_lowN %>%
+  tax_glom(., "Phylum")
+
+# melt the phyloseq object into a df-like structure
+ps_phylum <- psmelt(psdata_phylum)
+
+# Calculate phylum abundance
+phylum_abundances <- ps_phylum %>% 
+  mutate(Sample_nr = str_sub(Sample, start = -2, end = -1)) %>% 
+  group_by_at(vars(Sample, Sample_nr, sludge_source, substrate, replicate,exp_id, time, Phylum)) %>% 
+  summarise(rel_abund = sum(Abundance), .groups = "drop") %>%
+  group_by(Sample) %>% 
+  mutate(mean_rel_abund = rel_abund/sum(rel_abund)*100) %>% 
+  ungroup() %>% 
+  group_by(Sample, Phylum)
+
+# reshape plot data
+plot_data <- phylum_abundances%>% 
+  group_by(Sample, Sample_nr, sludge_source, replicate, substrate, time, Phylum) %>% 
+  summarise(mean_rel_abund = sum(mean_rel_abund), 
+            .groups = "drop") %>% 
+  mutate(Phylum = factor(Phylum))
+
+# plot data per timepoint, average over replicates
+average_data = 
+  plot_data %>% 
+  group_by(sludge_source, substrate, time, Phylum) %>% 
+  summarise(mean_rel_abund = mean(mean_rel_abund), sd = sd(mean_rel_abund)) 
+
+# predefined function to make plot
+plot_bars = function(data)  {
+  
+plot =   
+ggplot(data = data, aes(x=time, y = mean_rel_abund, fill = Phylum)) +
+  geom_col() +
+  scale_fill_manual(name=NULL, 
+                    values = colvec) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 0, hjust = 0.5),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom",
+        strip.background = element_rect(colour = "white"),
+        strip.text = element_text(face = "bold")) +
+  guides(fill = guide_legend(nrow=10)) + 
+  facet_nested_wrap(~sludge_source + substrate, 
+                    ncol=4,  scales = "free")
+
+return(plot)
+}  
+
+# create color palette
+colvec = c(brewer.pal(8,"Dark2"),brewer.pal(8,"Set2"),brewer.pal(8,"Accent"),brewer.pal(8,"Paired"),brewer.pal(12,"Set3"),brewer.pal(9,"Set1"), brewer.pal(9,"YlGnBu"), colorset)
+
+unique(pull(phylum_abundances, Phylum)) -> names(colvec)
+
+# create barplot
+average_plot = plot_bars(data = average_data)
+print(average_plot)
+
+ggsave(plot = average_plot, 
+       filename = here("results", "figures", glue("{proj}_barplot_replicate_average_phylum.pdf")), width = 8, height = 6)
+
+
+```
+
+### Beta diversity
+
+```{r total beta diversity rel_abund, message=F, fig.width=15, fig.height=6, echo=F, eval=T, warning=F, include=T, cache=F}
+
+# recode days as categorical
+colnames(phyloseq::sample_data(psdata_genus))
+
+### Beta diversity analysis first
+# input data  = psdata
+psdata_Genus_lowN_rel = transform_sample_counts(psdata_genus, function(x) x/sum(x))
+psdata_Genus_lowN_clr = microbiome::transform(psdata_genus, transform = "clr")
+
+#psdata_Genus_lowN_rel_v2 = subset_samples(psdata_Genus_lowN_rel, condition == "Low_N")
+
+phyloseq::sample_data(psdata_Genus_lowN_rel)$replicate = factor(phyloseq::sample_data(psdata_Genus_lowN_rel)$replicate)
+phyloseq::sample_data(psdata_Genus_lowN_rel)$sludge_source = factor(phyloseq::sample_data(psdata_Genus_lowN_rel)$sludge_source, levels = c("Bath", "Almere"))
+
+
+# ordination
+PCoA_BC <- ordinate(psdata_Genus_lowN_rel, method = "PCoA", distance = "bray")
+PCoA_Jac <- ordinate(psdata_Genus_lowN_rel, method = "PCoA", distance = "jaccard")
+PCoA_uu <- ordinate(psdata_Genus_lowN_rel, method = "PCoA", distance = "uunifrac")
+PCoA_wu <- ordinate(psdata_Genus_lowN_rel, method = "PCoA", distance = "wunifrac")
+
+# nmds_BC <- ordinate(psdata_Genus_lowN_rel_v2, method = "NMDS", distance = "bray")
+# nmds_Jac <- ordinate(psdata_Genus_lowN_rel_v2, method = "NMDS", distance = "jaccard")
+# nmds_uu <- ordinate(psdata_Genus_lowN_rel_v2, method = "NMDS", distance = "uunifrac")
+# nmds_wu <- ordinate(psdata_Genus_lowN_rel_v2, method = "NMDS", distance = "wunifrac")
+
+plot_PCoA_BC <- 
+  plot_ordination(physeq = psdata_Genus_lowN_rel, 
+                  ordination = PCoA_BC, 
+                  type = "samples", 
+                  axes = c(1,2), 
+                  color = "time", shape = "replicate") + 
+  ggrepel::geom_text_repel(aes(label = time), size = 2) +
+  scale_color_manual(values = c(brewer.pal(6, "Dark2"))) + 
+  geom_point(size=2) +
+  #ggtitle("Bray Curtis\n(presence and abundance)") + 
+  facet_nested(~sludge_source+substrate)
+  
+
+plot_PCoA_Jac <- 
+  plot_ordination(physeq = psdata_Genus_lowN_rel, 
+                  ordination = PCoA_Jac, 
+                   type = "samples", 
+                  axes = c(1,2), 
+                  color = "time", shape = "replicate") + 
+  ggrepel::geom_text_repel(aes(label = time), size = 2) +
+  scale_color_manual(values = c(brewer.pal(6, "Dark2"))) + 
+  geom_point(size=2) +
+  ggtitle("Jaccard\n(binary presence only)") +
+  facet_nested(~sludge_source + substrate)
+
+plot_PCoA_uu <- 
+  plot_ordination(physeq = psdata_Genus_lowN_rel, 
+                  ordination = PCoA_uu, 
+                   type = "samples", 
+                  axes = c(1,2), 
+                  color = "time", shape = "replicate") + 
+  ggrepel::geom_text_repel(aes(label = time), size = 2) +
+  scale_color_manual(values = c(brewer.pal(6, "Dark2"))) + 
+  geom_point(size=2) +
+  ggtitle("unweighted UniFrac \n(binary lineage presence only)") +
+  facet_nested(~sludge_source + substrate)
+
+
+# Combine the plots with shared legend
+combined_plots <- patchwork::wrap_plots(#plot_PCoA_Jac, 
+                                        #plot_PCoA_uu
+                                        plot_PCoA_BC +
+theme(
+  plot.title = element_text(hjust = 0.1, vjust = -10),
+  panel.background = element_rect(fill='transparent'),
+  panel.grid.major = element_line(colour = "grey90"),
+  strip.text = element_text(face = "bold"),
+  panel.border = element_rect(colour = "black", fill=NA, linewidth = 0.3),
+  axis.line.x = element_line(color="black", size = 0.3),
+  axis.line.y = element_line(color="black", size = 0.3))
+) +
+  patchwork::plot_layout(guides = "collect", ncol = 1) 
+
+# Display the combined plot
+combined_plots
+
+ggsave(plot = combined_plots, filename = here("results", "figures", glue("{proj}_plot_beta_diversity_all_rel.pdf")), width = 9, height =3)
+
+
+```
+
+```{r PERMANOVA statistics}
+
+psdata_Genus_lowN_rel = tax_glom(psdata_Genus_lowN_rel, "Genus")
+sample_data(psdata_Genus_lowN_rel)$substrate = factor(sample_data(psdata_Genus_lowN_rel)$substrate)
+
+# sample data
+sam_data <- data.frame(sample_data(psdata_Genus_lowN_rel))
+asv_data <- vegdist(t(otu_table(psdata_Genus_lowN_rel)), method = "bray")
+# calculate adonis permanova on granules only on ASV level Bray-Curtis dissimilarity (tested within sludge source)
+adonis_bc = adonis2(asv_data ~  sludge_source * substrate * time, 
+                    permutations = 999, 
+                    strata = sam_data$sludge_source, 
+                    data = sam_data)
+## three-way interaction with time not significant, 2-way interaction for sludge_source * substrate also not significant
+adonis_bc = adonis2(asv_data ~  sludge_source + substrate + time, 
+                    permutations = 999, 
+                    strata = sam_data$sludge_source, 
+                    data = sam_data)
+# view PERMANOVA output
+adonis_bc
+
+# test beta dispersion assumption (no significant deviations)
+betadisper_bc <- betadisper(asv_data, with(sam_data, interaction(sludge_source, substrate)))
+permutest(betadisper_bc,  pairwise=T)    
+
+
+```
+
+
+
+### Beta diversity per replicate run
+```{r total beta diversity rel_abund per replicate, fig.width=20, fig.height=6, message=F, echo=F, eval=T, warning=F, include=T, cache=F}
+
+
+# split by replicate
+# list objects
+physeq_list_reps = c(
+Almere_1_ac =   
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Almere" & replicate == 1 & substrate == "acetate"),
+Almere_2_ac =   
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Almere" & replicate == 2 & substrate == "acetate"),
+Bath_1_ac = 
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Bath" & replicate == 1 & substrate == "acetate"),
+Bath_2_ac = 
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Bath" & replicate == 2 & substrate == "acetate"),
+Almere_1_but = 
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Almere" & replicate == 1 & substrate == "butyrate"),
+Almere_2_but = 
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Almere" & replicate == 2 & substrate == "butyrate"),
+Bath_1_but = 
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Bath" & replicate == 1 & substrate == "butyrate"),
+Bath_2_but = 
+    subset_samples(psdata_Genus_lowN_rel, 
+                   sludge_source == "Bath" & replicate == 2 & substrate == "butyrate")
+)
+
+
+# Run ordination on each phyloseq object in the list
+ordination_list <- lapply(physeq_list_reps, function(physeq) {
+  ord_result_BC <- ordinate(physeq, method = "PCoA", distance = "bray")
+  ord_result_Jac <- ordinate(physeq, method = "PCoA", distance = "jaccard")
+  ord_result_uu <- ordinate(physeq, method = "PCoA", distance = "uunifrac")
+  ord_result_wu <- ordinate(physeq, method = "PCoA", distance = "wunifrac")
+  return(list(BC = ord_result_BC, Jac = ord_result_Jac, UU = ord_result_uu, WU = ord_result_wu))
+})
+
+# plot all combinatorial sets
+plot_ordination_from_list <- function(ordination_list, metric) {
+  plots <- lapply(names(ordination_list), function(name) {
+    ord_result <- ordination_list[[name]][[metric]]
+    plot_ordination(ordination = ord_result, 
+                    physeq = physeq_list_reps[[name]],
+                    color = "time", 
+                    shape = "substrate",
+                    title = paste(name, metric, sep = " - ")) +
+      scale_y_continuous(limits = c(-0.4, 0.4)) +
+      scale_x_continuous(limits = c(-0.45, 0.45)) +
+      geom_point(size = 3)
+  })
+  return(plots)
+}
+
+# Plot each ordination using the specified metric
+metric_to_plot <- "Jac"  # Change this to "BC", "Jac", "UU", or "WU"
+plots <- plot_ordination_from_list(ordination_list, metric_to_plot)
+gridExtra::grid.arrange(grobs = plots, ncol = 4)
+
+# Display the plots
+ggsave(plot = gridExtra::grid.arrange(grobs = plots, ncol = 4), filename = here("results", "figures", glue("{proj}_{metric_to_plot}_plots_individual_groups.pdf")), width = 20, height = 7)
+
+# Plot each ordination using the specified metric
+metric_to_plot <- "BC"  # Change this to "BC", "Jac", "UU", or "WU"
+plots <- plot_ordination_from_list(ordination_list, metric_to_plot)
+#gridExtra::grid.arrange(grobs = plots, ncol = 4)
+
+# Display the plots
+ggsave(plot = gridExtra::grid.arrange(grobs = plots, ncol = 4), filename = here("results", "figures", glue("{proj}_{metric_to_plot}_plots_individual_groups.pdf")), width = 20, height = 7)
+
+
+```
+
+```{r beta diversity distances from a single ordination}
+
+phylist = list(physeq_all = psdata_Genus_lowN_rel)
+
+# Run ordination on each phyloseq object in the list
+ordination_list <- lapply(phylist, function(physeq) {
+  ord_result_BC <- ordinate(physeq, method = "PCoA", distance = "bray")
+  ord_result_Jac <- ordinate(physeq, method = "PCoA", distance = "jaccard")
+  ord_result_uu <- ordinate(physeq, method = "PCoA", distance = "uunifrac")
+  ord_result_wu <- ordinate(physeq, method = "PCoA", distance = "wunifrac")
+  return(list(BC = ord_result_BC, Jac = ord_result_Jac, UU = ord_result_uu, WU = ord_result_wu))
+})
+
+# plot all combinatorial sets
+plot_ordination_from_list <- function(ordination_list, metric, fix_axes = F) {
+  plots <- lapply(names(ordination_list), function(name) {
+    ord_result <- ordination_list[[name]][[metric]]
+    if(fix_axes == TRUE){
+    plot_ordination(ordination = ord_result, 
+                    physeq = phylist[[name]], # ADJUST TO PHYLOSEQ list name
+                    color = "time", 
+                    shape = "substrate",
+                    title = paste(name, metric, sep = " - ")) +
+      scale_y_continuous(limits = c(-0.3, 0.3)) +
+      scale_x_continuous(limits = c(-0.45, 0.45)) +
+      geom_point(size = 3)
+    } else {
+      plot_ordination(ordination = ord_result, 
+                    physeq = phylist[[name]], # ADJUST TO PHYLOSEQ list name
+                    color = "time", 
+                    shape = "substrate",
+                    title = paste(name, metric, sep = " - ")) +
+      geom_point(size = 3)
+    }
+  })
+  return(plots)
+}
+
+# Plot each ordination using the specified metric
+metric_to_plot <- "Jac"  # Change this to "BC", "Jac", "UU", or "WU"
+plots <- plot_ordination_from_list(ordination_list, metric_to_plot)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+
+# Display the plots
+ggsave(plot = gridExtra::grid.arrange(grobs = plots, ncol = 1), filename = here("results", "figures", glue("{proj}_{metric_to_plot}_plots_all_in_one_ordination.pdf")), width = 7, height = 5)
+
+# Plot each ordination using the specified metric
+metric_to_plot <- "BC"  # Change this to "BC", "Jac", "UU", or "WU"
+plots <- plot_ordination_from_list(ordination_list, metric_to_plot)
+#gridExtra::grid.arrange(grobs = plots, ncol = 1)
+
+# Display the plots
+ggsave(plot = gridExtra::grid.arrange(grobs = plots, ncol = 1), filename = here("results", "figures", glue("{proj}_{metric_to_plot}_plots_all_in_one_ordination.pdf")), width = 7, height = 5)
+```
+
+#### Direct visualisation of beta diversity distances/dissimilarities between consecutive time points
+```{r beta diversity distances within runs, eval=F, echo=F, fig.height=5, fig.width=7, message=FALSE, warning=FALSE, cache=FALSE, include=F}
+
+# tax info
+tax.df <- as.data.frame(tax_table(psdata_genus))
+tax.df$OTU <- rownames(tax.df)
+
+# psmelt
+psmelt_Genus_lowN =
+psdata_genus %>% 
+  psmelt() %>% 
+  select(Sample, OTU, everything())
+  
+# ASV table core community water
+Genus_lowN_table = 
+psmelt_Genus_lowN %>% 
+  select(Sample, OTU, counts=Abundance) %>% 
+  pivot_wider(names_from = "OTU", values_from = "counts", values_fill = 0) %>% 
+  data.frame(row.names = 1) %>% as.matrix() %>% round()
+
+# beta diversity
+
+# avgdist Bray curtis dist matrix to use:
+bray_Genus_lowN_table = vegdist(Genus_lowN_table, method = "bray")
+jac_Genus_lowN_table = vegdist(Genus_lowN_table, method = "jaccard")
+uu_Genus_lowN_table = UniFrac(psdata_genus, weighted = F)
+wu_Genus_lowN_table = UniFrac(psdata_genus, weighted = T)
+
+# reshape to long format
+jac_Genus_lowN_long = 
+jac_Genus_lowN_table %>% 
+  as.matrix() %>% 
+  as_tibble(rownames = "sample_a") %>% 
+  pivot_longer(-sample_a, names_to = "sample_b", values_to = "distance") %>% 
+  dplyr::mutate(metric = "jaccard")
+
+bray_Genus_lowN_long = 
+bray_Genus_lowN_table %>% 
+  as.matrix() %>% 
+  as_tibble(rownames = "sample_a") %>% 
+  pivot_longer(-sample_a, names_to = "sample_b", values_to = "distance") %>% 
+  dplyr::mutate(metric = "braycurtis")
+
+uu_Genus_lowN_long = 
+  uu_Genus_lowN_table %>% 
+  as.matrix() %>% 
+  as_tibble(rownames = "sample_a") %>% 
+  pivot_longer(-sample_a, names_to = "sample_b", values_to = "distance") %>% 
+  dplyr::mutate(metric = "unweighted unifrac")
+
+wu_Genus_lowN_long = 
+  wu_Genus_lowN_table %>% 
+  as.matrix() %>% 
+  as_tibble(rownames = "sample_a") %>% 
+  pivot_longer(-sample_a, names_to = "sample_b", values_to = "distance") %>% 
+  dplyr::mutate(metric = "weighted unifrac")
+  
+# define consecutive sampling moments
+consecutive_timepoints = c("0h_to_24h", "24h_to_48h")
+
+# reshape distance data and combine with metadata
+all_dists_Genus_lowN =
+  bind_rows(
+    
+bray_Genus_lowN_long %>% 
+  filter(sample_a != sample_b) %>% # remove self-comparisons
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_a" = "Sample")) %>% 
+  rename_with(., .fn = ~paste0(.,"_a"), .cols = names(.)[-c(1:4)]) %>% # tag metadata to first sample
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_b" = "Sample")) %>%
+  rename_with(., .fn = ~paste0(.,"_b"), .cols = names(.)[c(13:ncol(.))]) %>% # tag metadata to second sample
+  dplyr::mutate(consec_timepoints = paste0(time_a,"_to_", time_b)) %>%
+  filter(consec_timepoints %in% consecutive_timepoints) %>% # select only distances between consecutive times 
+  filter(sludge_source_a == sludge_source_b, # select only within location comparisons
+         substrate_a == substrate_b, # select only within substrate feed comparisons
+         replicate_a == replicate_b # select only within replicate comparisons
+         ) %>% 
+  dplyr::mutate(stability = 1-distance)
+,
+jac_Genus_lowN_long %>% 
+filter(sample_a != sample_b) %>% # remove self-comparisons
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_a" = "Sample")) %>% 
+  rename_with(., .fn = ~paste0(.,"_a"), .cols = names(.)[-c(1:4)]) %>% # tag metadata to first sample
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_b" = "Sample")) %>%
+  rename_with(., .fn = ~paste0(.,"_b"), .cols = names(.)[c(13:ncol(.))]) %>% # tag metadata to second sample
+  dplyr::mutate(consec_timepoints = paste0(time_a,"_to_", time_b)) %>%
+  filter(consec_timepoints %in% consecutive_timepoints) %>% # select only distances between consecutive times 
+  filter(sludge_source_a == sludge_source_b, # select only within location comparisons
+         substrate_a == substrate_b, # select only within substrate feed comparisons
+         replicate_a == replicate_b # select only within replicate comparisons
+         ) %>% 
+  dplyr::mutate(stability = 1-distance)
+,
+uu_Genus_lowN_long %>% 
+  filter(sample_a != sample_b) %>% # remove self-comparisons
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_a" = "Sample")) %>% 
+  rename_with(., .fn = ~paste0(.,"_a"), .cols = names(.)[-c(1:4)]) %>% # tag metadata to first sample
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_b" = "Sample")) %>%
+  rename_with(., .fn = ~paste0(.,"_b"), .cols = names(.)[c(13:ncol(.))]) %>% # tag metadata to second sample
+  dplyr::mutate(consec_timepoints = paste0(time_a,"_to_", time_b)) %>%
+  filter(consec_timepoints %in% consecutive_timepoints) %>% # select only distances between consecutive times 
+  filter(sludge_source_a == sludge_source_b, # select only within location comparisons
+         substrate_a == substrate_b, # select only within substrate feed comparisons
+         replicate_a == replicate_b # select only within replicate comparisons
+         ) %>% 
+  dplyr::mutate(stability = 1-distance)
+,
+wu_Genus_lowN_long %>% 
+  filter(sample_a != sample_b) %>% # remove self-comparisons
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_a" = "Sample")) %>% 
+  rename_with(., .fn = ~paste0(.,"_a"), .cols = names(.)[-c(1:4)]) %>% # tag metadata to first sample
+  inner_join(., alpha2 %>% select(Sample,paper_id:time), by = c("sample_b" = "Sample")) %>%
+  rename_with(., .fn = ~paste0(.,"_b"), .cols = names(.)[c(13:ncol(.))]) %>% # tag metadata to second sample
+  dplyr::mutate(consec_timepoints = paste0(time_a,"_to_", time_b)) %>%
+  filter(consec_timepoints %in% consecutive_timepoints) %>% # select only distances between consecutive times 
+  filter(sludge_source_a == sludge_source_b, # select only within location comparisons
+         substrate_a == substrate_b, # select only within substrate feed comparisons
+         replicate_a == replicate_b # select only within replicate comparisons
+         ) %>% 
+  dplyr::mutate(stability = 1-distance)
+)
+
+
+# plot distances
+plot_distances_Genus_lowN = 
+all_dists_Genus_lowN %>% 
+  ggplot(aes(x = consec_timepoints, y = distance, fill = substrate_a, group = substrate_a)) +
+    geom_col(aes(fill=substrate_a), position = position_dodge(1), show.legend = F) +
+    #geom_point(size = 2, shape =21, color = "black", position = position_dodge(1), show.legend = T) + # position = position_jitterdodge(0.2)) +
+    scale_color_manual(values = c(brewer.pal(6, "Dark2"))) +
+    scale_fill_manual(values = c(brewer.pal(6, "Dark2"))) +
+    scale_shape_manual(values = c(19,17, 2)) +
+    scale_y_continuous(limits = c(0,1)) +
+    #theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.text = element_markdown(),
+          legend.key.size = unit(7, "pt"),
+          axis.ticks.x = element_blank(), 
+          #strip.background = element_rect(colour = "grey50"),
+          strip.placement = "outside",
+          legend.position = "right",
+          panel.border = element_rect(colour = "grey50", fill = NA)) +
+    facet_nested(rows = vars(metric), cols=vars(sludge_source_a, substrate_a, replicate_a), space = "free", scales = "free") +
+    labs(y = "Distance \n(0 = identical composition)",
+         x = NULL) 
+
+print(plot_distances_Genus_lowN)
+
+ggsave(plot_distances_Genus_lowN, 
+       filename = here("results", "figures", glue("{proj}_community_distances_within_experiments.pdf")), width = 12, height = 9)
+
+```
+

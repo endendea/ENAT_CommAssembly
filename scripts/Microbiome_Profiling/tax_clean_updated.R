@@ -4,12 +4,12 @@ library(phyloseq)
 library(tidyverse)
 library(glue)
 
-tax_clean <- function(psdata){
+tax_clean <- function(psdata, output_folder){
   
   psdata_name <- deparse(substitute(psdata))
   # save uncleaned psdata
-  if(!dir.exists("output_data")){dir.create("output_data")}
-  saveRDS(psdata, file = paste0("output_data/",psdata_name,"_uncleaned.rds"))
+  saveRDS(psdata, file = file.path(output_folder, paste0(psdata_name, "_uncleaned.rds")))
+
   
   # ASV count start
   psdata_in = psdata
@@ -55,9 +55,6 @@ tax_clean <- function(psdata){
   
   # difference
   removed_ASV_count = ntaxa(psdata_in) - ntaxa(psdata_out)
-  
-  #save psdata after cleaning as RDS object
-  saveRDS(psdata, file = glue::glue("output_data/",{psdata_name},"_cleaned.rds", .sep = ""))
   print(
     paste("taxonomy table cleaned: ",  removed_ASV_count, " ASVs removed.  Phyloseq object saved as .rds object in output_data")
   )
