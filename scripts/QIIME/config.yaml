@@ -1,0 +1,24 @@
+# project info
+project: "AEST"
+
+# conda env path
+conda_env: "/export/microlab/miniconda3/envs/gut-to-soil"
+
+# Metadata and raw input data
+metadata: "raw_data/AEST_Q10390_16S_515F926R_20210902@metadata_vAEST_20210903_formatted.txt"
+zipped_raw_data: "raw_data/AEST_t0_fastq_files.zip"
+raw_data_type: "SampleData[PairedEndSequencesWithQuality]"
+manifest: "AEST_manifest.csv"
+source_format: "CasavaOneEightSingleLanePerSampleDirFmt"
+
+# demultiplex
+is_multiplexed: false
+barcode_col: ""  # Leave empty if not multiplexed
+
+# denoise
+denoise_type: "denoise-paired" # denoise_paired / denoise_single
+trim-left: "0"
+trunc-len: "240"
+
+# tax_classification
+classifier: "raw_data/silva-138-99-nb-classifier.qza"

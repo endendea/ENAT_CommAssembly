@@ -1,0 +1,178 @@
+configfile: "config.yaml"
+
+# Conditional rule dependencies
+def get_downstream_input(wildcards):
+    if config["is_multiplexed"]:
+        return f"results/{config['project']}_demuxed.qza"
+    else:
+        return f"results/{config['project']}_demux.qza"
+
+rule all:
+    input:
+        f"results/{config['project']}_rooted-tree.qza",
+        f"results/{config['project']}_taxonomy.qza",
+        f"results/{config['project']}_table.qzv",
+        f"results/{config['project']}_rep-seqs.qzv",
+        f"results/{config['project']}_metadata.qzv",
+        f"results/{config['project']}_demux.qzv"
+
+rule unzip_reads:
+    input:
+        zipped=config["zipped_raw_data"]
+    output:
+        temp("temp/unzipped_reads/.done")
+    shell:
+        """
+        mkdir -p temp/unzipped_reads
+        unzip {input.zipped} -d temp/unzipped_reads
+
+        find temp/unzipped_reads -type f -name "*.gz" -exec mv -t temp/unzipped_reads {{}} +
+
+        find temp/unzipped_reads -type d -mindepth 1 -empty -delete
+
+        touch {output}
+        """
+
+rule import_data:
+    input:
+        "temp/unzipped_reads/.done"
+    output:
+        f"results/{config['project']}_demux.qza"
+    params:
+        input_dir = "temp/unzipped_reads",
+        type = config["raw_data_type"],
+        source_format = config["source_format"]
+    shell:
+        """
+        qiime tools import \
+          --type {params.type} \
+          --input-path {params.input_dir} \
+          --input-format {params.source_format} \
+          --output-path {output}
+        """
+
+rule demultiplex:
+    input:
+        seqs=f"results/{config['project']}_demux.qza",
+        map=config['metadata'],
+    output:
+        demuxed=f"results/{config['project']}_demuxed.qza",
+        detail=f"results/{config['project']}_demuxed-details.qza"
+    shell:
+        """
+        qiime demux emp-single \
+          --i-seqs {input.seqs} \
+          --m-barcodes-file {input.map} \
+          --m-barcodes-column {config['barcode_col']} \
+          --o-per-sample-sequences {output.demuxed} \
+          --o-error-correction-details {output.detail}
+        """
+
+rule demux_summarize:
+    input:
+        lambda wildcards: get_downstream_input(wildcards)
+    output:
+        f"results/{config['project']}_demux.qzv"
+    shell:
+        """
+        qiime demux summarize \
+              --i-data {input} \
+              --o-visualization {output}
+        """
+
+rule visualize_metadata:
+    input:
+        config['metadata']
+    output:
+        f"results/{config['project']}_metadata.qzv"
+    shell:
+        """
+        qiime metadata tabulate \
+            --m-input-file {input} \
+            --o-visualization {output}
+        """
+
+rule denoise:
+    input:
+        lambda wildcards: get_downstream_input(wildcards)
+    output:
+        rep_seq=f"results/{config['project']}_rep-seqs.qza",
+        table=f"results/{config['project']}_table.qza",
+        denoise_stat=f"results/{config['project']}_denoise_stats.qza"
+    params:
+        denoise_type= config['denoise_type'],
+        trim_left= config['trim-left'],
+        trunc_left= config['trunc-len']
+    shell:
+        """
+        qiime dada2 {params.denoise_type} \
+            --i-demultiplexed-seqs {input} \
+            --p-trim-left-f {params.trim_left} \
+            --p-trim-left-r  {params.trim_left} \
+            --p-trunc-len-f {params.trunc_left} \
+            --p-trunc-len-r {params.trunc_left} \
+            --o-representative-sequences {output.rep_seq} \
+            --o-table {output.table} \
+            --o-denoising-stats {output.denoise_stat} \
+            --verbose
+        """
+
+rule feature_data_summary:
+    input:
+        table=f"results/{config['project']}_table.qza",
+        map=config['metadata'],
+        rep_seq=f"results/{config['project']}_rep-seqs.qza"
+    output:
+        table_viz=f"results/{config['project']}_table.qzv",
+        repseq_viz=f"results/{config['project']}_rep-seqs.qzv"
+    shell:
+        """
+        qiime feature-table summarize \
+          --i-table {input.table} \
+          --m-sample-metadata-file {input.map} \
+          --o-visualization {output.table_viz}
+        qiime feature-table tabulate-seqs \
+          --i-data {input.rep_seq} \
+          --o-visualization {output.repseq_viz}
+        """
+
+rule generate_tree:
+    input:
+        f"results/{config['project']}_rep-seqs.qza"
+    output:
+        alignment=f"results/{config['project']}_aligned-rep-seqs.qza",
+        masked_alignment=f"results/{config['project']}_masked-aligned-rep-seqs.qza",
+        unrooted_tree=f"results/{config['project']}_unrooted-tree.qza",
+        rooted_tree=f"results/{config['project']}_rooted-tree.qza"
+    shell:
+        """
+        qiime phylogeny align-to-tree-mafft-fasttree \
+          --i-sequences {input} \
+          --o-alignment {output.alignment} \
+          --o-masked-alignment {output.masked_alignment} \
+          --o-tree {output.unrooted_tree} \
+          --o-rooted-tree {output.rooted_tree}
+        """
+
+rule tax_classification:
+    input:
+        classifier=config['classifier'],
+        rep_seq=f"results/{config['project']}_rep-seqs.qza"
+    output:
+        tax_table=f"results/{config['project']}_taxonomy.qza",
+        tax_vis=f"results/{config['project']}_taxonomy.qzv"
+    shell:
+        """
+        qiime feature-classifier classify-sklearn \
+          --i-classifier {input.classifier} \
+          --i-reads {input.rep_seq} \
+          --o-classification {output.tax_table}
+        qiime metadata tabulate \
+          --m-input-file {output.tax_table} \
+          --o-visualization {output.tax_vis}
+        """
+
+
+
+
+
