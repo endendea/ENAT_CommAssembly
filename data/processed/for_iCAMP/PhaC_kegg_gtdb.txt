@@ -1,0 +1,402 @@
+Kingdom	Phylum	Class	Order	Family	Genus	Species	nr_genomes	PhaC_gene	PhaC_status
+Bacteria	Patescibacteria	Gracilibacteria	Absconditabacteriales_(SR1)	Absconditabacteriales_(SR1)	Absconditabacteriales_(SR1)	NA	NA	NA	Unknown
+Bacteria	Patescibacteria	Gracilibacteria	Order of Gracilibacteria	Family of Gracilibacteria	Genus of Gracilibacteria	NA	NA	NA	Unknown
+Bacteria	Patescibacteria	Parcubacteria	Candidatus_Nomurabacteria	Candidatus_Nomurabacteria	Candidatus_Nomurabacteria	NA	NA	NA	Unknown
+Bacteria	Patescibacteria	Parcubacteria	Order of Parcubacteria	Family of Parcubacteria	Genus of Parcubacteria	NA	NA	NA	Unknown
+Bacteria	Patescibacteria	Gracilibacteria	Gracilibacteria	Gracilibacteria	Gracilibacteria	NA	NA	NA	Unknown
+Bacteria	Cyanobacteria	Vampirivibrionia	Gastranaerophilales	Gastranaerophilales	Gastranaerophilales	NA	NA	NA	Unknown
+Bacteria	Cyanobacteria	Vampirivibrionia	Vampirovibrionales	Vampirovibrionales	Vampirovibrionales	NA	NA	NA	Unknown
+Bacteria	Cyanobacteria	Vampirivibrionia	Obscuribacterales	Obscuribacteraceae	Candidatus_Obscuribacter	NA	NA	NA	Unknown
+Bacteria	Cyanobacteria	Vampirivibrionia	Obscuribacterales	Obscuribacteraceae	Obscuribacteraceae	NA	NA	NA	Unknown
+Bacteria	Patescibacteria	Saccharimonadia	Saccharimonadales	Saccharimonadales	Saccharimonadales	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Opitutales	Opitutaceae	Lacunisphaera	NA	83	NA	NO
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Opitutales	Opitutaceae	Cephaloticoccus	NA	18	NA	NO
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Opitutales	Opitutaceae	Genus of Opitutaceae	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Opitutales	Opitutaceae	IMCC26134	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Opitutales	Opitutaceae	Opitutus	NA	18	NA	NO
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Opitutales	Puniceicoccaceae	Genus of Puniceicoccaceae	NA	NA	NA	Unknown
+Bacteria	Fibrobacterota	Chitinivibrionia	Order of Chitinivibrionia	Family of Chitinivibrionia	Genus of Chitinivibrionia	NA	NA	NA	Unknown
+Bacteria	Gemmatimonadota	Gemmatimonadetes	Gemmatimonadales	Gemmatimonadaceae	Gemmatimonas	NA	102	NA	NO
+Bacteria	Gemmatimonadota	Gemmatimonadetes	Gemmatimonadales	Gemmatimonadaceae	Genus of Gemmatimonadaceae	NA	NA	NA	Unknown
+Bacteria	Spirochaetota	Spirochaetia	Spirochaetales	Spirochaetaceae	Spirochaeta_2	NA	NA	NA	Unknown
+Bacteria	Spirochaetota	Spirochaetia	Spirochaetales	Spirochaetaceae	Genus of Spirochaetaceae	NA	NA	NA	Unknown
+Bacteria	Patescibacteria	Berkelbacteria	Berkelbacteria	Berkelbacteria	Berkelbacteria	NA	NA	NA	Unknown
+Bacteria	Fusobacteriota	Fusobacteriia	Fusobacteriales	Fusobacteriaceae	Cetobacterium	NA	75	NA	NO
+Bacteria	Myxococcota	Myxococcia	Myxococcales	Myxococcaceae	KD3-10	NA	NA	NA	Unknown
+Bacteria	Nitrospirota	Nitrospiria	Nitrospirales	Nitrospiraceae	Nitrospira	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Chloroflexia	Thermomicrobiales	JG30-KF-CM45	JG30-KF-CM45	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Chloroflexia	Chloroflexales	Herpetosiphonaceae	Herpetosiphon	NA	7	NA	NO
+Bacteria	Chloroflexi	Anaerolineae	SBR1031	A4b	A4b	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	SBR1031	A4b	OLB13	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Acidobacteriae	Order of Acidobacteriae	Family of Acidobacteriae	Genus of Acidobacteriae	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Acidobacteriae	Elev-16S-1166	Elev-16S-1166	Elev-16S-1166	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Acidobacteriae	Acidobacteriae	Acidobacteriae	Paludibaculum	NA	13	NA	NO
+Bacteria	Acidobacteriota	Acidobacteriae	Bryobacterales	Bryobacteraceae	Bryobacter	NA	10	NA	NO
+Bacteria	Bdellovibrionota	Oligoflexia	0319-6G20	0319-6G20	0319-6G20	NA	NA	NA	Unknown
+Bacteria	Desulfobacterota	Desulfuromonadia	PB19	PB19	PB19	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Polyangia	Blfdi19	Blfdi19	Blfdi19	NA	NA	NA	Unknown
+Bacteria	Desulfobacterota	Desulfuromonadia	Bradymonadales	Bradymonadales	Bradymonadales	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Genus of Polyangiaceae	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Polyangia	Polyangiales	BIrii41	BIrii41	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Pajaroellobacter	NA	1	NA	NO
+Bacteria	Myxococcota	Polyangia	Polyangiales	Phaselicystidaceae	Phaselicystis	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Polyangia	Polyangiales	Sandaracinaceae	Sandaracinus	NA	4	YES	YES
+Bacteria	Myxococcota	Polyangia	Polyangiales	Sandaracinaceae	Genus of Sandaracinaceae	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Polyangia	mle1-27	mle1-27	mle1-27	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Myxococcia	Myxococcales	Anaeromyxobacteraceae	Anaeromyxobacter	NA	46	NA	NO
+Bacteria	Myxococcota	Myxococcia	Myxococcales	Myxococcaceae	P3OB-42	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Myxococcia	Myxococcales	Myxococcaceae	Genus of Myxococcaceae	NA	NA	NA	Unknown
+Bacteria	SAR324_clade(Marine_group_B)	SAR324_clade(Marine_group_B)	SAR324_clade(Marine_group_B)	SAR324_clade(Marine_group_B)	SAR324_clade(Marine_group_B)	NA	NA	NA	Unknown
+Bacteria	Desulfobacterota	Desulfobacteria	Desulfobacterales	Desulfobacteraceae	Desulfobacter	NA	46	NA	NO
+Bacteria	Myxococcota	Polyangia	Haliangiales	Haliangiaceae	Haliangium	NA	1	NA	NO
+Bacteria	Myxococcota	Polyangia	Nannocystales	Nannocystaceae	Genus of Nannocystaceae	NA	NA	NA	Unknown
+Bacteria	Myxococcota	Polyangia	Nannocystales	Nannocystaceae	Nannocystis	NA	13	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Micavibrionales	Family of Micavibrionales	Genus of Micavibrionales	NA	NA	NA	Unknown
+Bacteria	NB1-j	NB1-j	NB1-j	NB1-j	NB1-j	NA	NA	NA	Unknown
+Bacteria	Bdellovibrionota	Bdellovibrionia	Bdellovibrionales	Bdellovibrionaceae	Bdellovibrio	NA	43	NA	NO
+Bacteria	Desulfobacterota	Desulfovibrionia	Desulfovibrionales	Desulfomicrobiaceae	Desulfomicrobium	NA	39	NA	NO
+Bacteria	Bdellovibrionota	Oligoflexia	Oligoflexales	Family of Oligoflexales	Genus of Oligoflexales	NA	NA	NA	Unknown
+Bacteria	Campilobacterota	Campylobacteria	Campylobacterales	Arcobacteraceae	Pseudarcobacter	NA	NA	NA	Unknown
+Bacteria	Bdellovibrionota	Bdellovibrionia	Bacteriovoracales	Bacteriovoracaceae	Peredibacter	NA	44	NA	NO
+Bacteria	Bdellovibrionota	Bdellovibrionia	Bacteriovoracales	Bacteriovoracaceae	Bacteriovorax	NA	35	NA	NO
+Bacteria	Bdellovibrionota	Bdellovibrionia	Bacteriovoracales	Bacteriovoracaceae	Genus of Bacteriovoracaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rickettsiales	SM2D12	SM2D12	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rickettsiales	Rickettsiaceae	Genus of Rickettsiaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodospirillales	Family of Rhodospirillales	Genus of Rhodospirillales	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Micavibrionales	Micavibrionaceae	Genus of Micavibrionaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Paracaedibacterales	Paracaedibacteraceae	Candidatus_Paracaedibacter	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Paracaedibacterales	Paracaedibacteraceae	Genus of Paracaedibacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	A0839	A0839	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Reyranellales	Reyranellaceae	Reyranella	NA	122	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodospirillales	Rhodospirillaceae	Genus of Rhodospirillaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Micropepsales	Micropepsaceae	Genus of Micropepsaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Acetobacterales	Acetobacteraceae	Roseomonas	NA	48	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Acetobacterales	Acetobacteraceae	Genus of Acetobacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Azospirillales	Azospirillales_Incertae_Sedis	Stella	NA	5	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Dongiales	Dongiaceae	Dongia	NA	30	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Order of Alphaproteobacteria	Family of Alphaproteobacteria	Genus of Alphaproteobacteria	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Holosporales	Holosporaceae	Genus of Holosporaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Caedibacterales	Caedibacteraceae	Caedibacter	NA	2	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Rickettsiales	AB1	AB1	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodospirillales	Magnetospirillaceae	Magnetospirillum	NA	27	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Sphingomonadales	Sphingomonadaceae	Sphingobium	NA	386	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Sphingomonadales	Sphingomonadaceae	Rhizorhapis	NA	5	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Sphingomonadales	Sphingomonadaceae	Genus of Sphingomonadaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Sphingomonadales	Sphingomonadaceae	Sphingopyxis	NA	207	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Sphingomonadales	Sphingomonadaceae	Novosphingobium	NA	471	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Sphingomonadales	Sphingomonadaceae	Sphingosinicella	NA	11	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Sphingomonadales	Sphingomonadaceae	Sphingomonas	NA	914	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Hyphomicrobiaceae	Hyphomicrobium	NA	NA	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Hyphomicrobiaceae	Pedomicrobium	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Rhizobiaceae	Rhizobiaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Rhizobiaceae	Genus of Rhizobiaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Rhizobiaceae	Mesorhizobium	NA	1430	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Devosiaceae	Devosia	NA	203	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Rhizobiales_Incertae_Sedis	Genus of Rhizobiales_Incertae_Sedis	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodobacterales	Rhodobacteraceae	Amaricoccus	NA	31	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodobacterales	Rhodobacteraceae	Gemmobacter	NA	58	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodobacterales	Rhodobacteraceae	Genus of Rhodobacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodobacterales	Rhodobacteraceae	Paracoccus	NA	295	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodobacterales	Rhodobacteraceae	Defluviimonas	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhodospirillales	Rhodospirillaceae	Novispirillum	NA	2	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Hyphomonadaceae	Hyphomonas	NA	215	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Hyphomonadaceae	Hirschia	NA	7	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Hyphomonadaceae	UKL13-1	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Hyphomonadaceae	SWB02	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Rhizobiaceae	Shinella	NA	66	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Rhizobiaceae	Allorhizobium-Neorhizobium-Pararhizobium-Rhizobium	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Caulobacteraceae	Brevundimonas	NA	569	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Caulobacteraceae	Genus of Caulobacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Caulobacteraceae	Caulobacter	NA	151	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Caulobacterales	Caulobacteraceae	Phenylobacterium	NA	321	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Beijerinckiaceae	Bosea	NA	173	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Beijerinckiaceae	Genus of Beijerinckiaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Beijerinckiaceae	alphaI_cluster	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Rhizobiales_Incertae_Sedis	Phreatobacter	NA	17	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Pleomorphomonadaceae	Genus of Pleomorphomonadaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Pleomorphomonadaceae	Prosthecomicrobium	NA	1	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Xanthobacteraceae	Bradyrhizobium	NA	1389	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Xanthobacteraceae	Genus of Xanthobacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Xanthobacteraceae	Afipia	NA	77	YES	YES
+Bacteria	Proteobacteria	Alphaproteobacteria	Rhizobiales	Family of Rhizobiales	Genus of Rhizobiales	NA	NA	NA	Unknown
+Bacteria	Bdellovibrionota	Oligoflexia	053A03-B-DI-P58	053A03-B-DI-P58	053A03-B-DI-P58	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Alphaproteobacteria	Rickettsiales	Rickettsiaceae	Candidatus_Megaira	NA	NA	NA	Unknown
+Bacteria	Desulfobacterota	Desulfobulbia	Desulfobulbales	Desulfobulbaceae	Desulfobulbus	NA	55	NA	NO
+Bacteria	Actinobacteriota	Actinobacteria	Micrococcales	Intrasporangiaceae	Tetrasphaera	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Actinobacteria	Micrococcales	Intrasporangiaceae	Genus of Intrasporangiaceae	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Actinobacteria	Micrococcales	Microbacteriaceae	Genus of Microbacteriaceae	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Actinobacteria	Micrococcales	Family of Micrococcales	Genus of Micrococcales	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Actinobacteria	Corynebacteriales	Nocardiaceae	Gordonia	NA	276	YES	YES
+Bacteria	Actinobacteriota	Actinobacteria	Corynebacteriales	Mycobacteriaceae	Mycobacterium	NA	11924	YES	YES
+Bacteria	Actinobacteriota	Actinobacteria	PeM15	PeM15	PeM15	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Actinobacteria	Order of Actinobacteria	Family of Actinobacteria	Genus of Actinobacteria	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Actinobacteria	Frankiales	Sporichthyaceae	Longivirga	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Actinobacteria	Propionibacteriales	Nocardioidaceae	Nocardioides	NA	560	YES	YES
+Bacteria	Actinobacteriota	Actinobacteria	Propionibacteriales	Nocardioidaceae	Marmoricola	NA	60	NA	NO
+Bacteria	Actinobacteriota	Acidimicrobiia	Microtrichales	Ilumatobacteraceae	CL500-29_marine_group	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Acidimicrobiia	Microtrichales	Microtrichaceae	Candidatus_Microthrix	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Acidimicrobiia	Microtrichales	Microtrichaceae	Genus of Microtrichaceae	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Acidimicrobiia	IMCC26256	IMCC26256	IMCC26256	NA	22	NA	NO
+Bacteria	Actinobacteriota	Acidimicrobiia	Microtrichales	Iamiaceae	Iamia	NA	10	NA	NO
+Bacteria	Actinobacteriota	Acidimicrobiia	Microtrichales	Microtrichaceae	IMCC26207	NA	24	NA	NO
+Bacteria	Actinobacteriota	Acidimicrobiia	Order of Acidimicrobiia	Family of Acidimicrobiia	Genus of Acidimicrobiia	NA	NA	NA	Unknown
+Bacteria	Actinobacteriota	Thermoleophilia	Gaiellales	Family of Gaiellales	Genus of Gaiellales	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Thermoanaerobaculia	Thermoanaerobaculales	Thermoanaerobaculaceae	Subgroup_10	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Holophagae	Subgroup_7	Subgroup_7	Subgroup_7	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Holophagae	Holophagales	Holophagaceae	Geothrix	NA	187	NA	NO
+Bacteria	Acidobacteriota	Holophagae	Holophagales	Holophagaceae	Holophagaceae	NA	NA	NA	Unknown
+Bacteria	Firmicutes	Clostridia	Clostridiales	Clostridiaceae	Proteiniclasticum	NA	19	NA	NO
+Bacteria	Firmicutes	Clostridia	Clostridiales	Clostridiaceae	Clostridium_sensu_stricto_1	NA	NA	NA	Unknown
+Bacteria	Firmicutes	Clostridia	Clostridiales	Clostridiaceae	Clostridium_sensu_stricto_7	NA	NA	NA	Unknown
+Bacteria	WPS-2	WPS-2	WPS-2	WPS-2	WPS-2	NA	NA	NA	Unknown
+Bacteria	Firmicutes	Clostridia	Peptostreptococcales-Tissierellales	Sedimentibacteraceae	Sedimentibacter	NA	143	NA	NO
+Bacteria	Firmicutes	Clostridia	Peptostreptococcales-Tissierellales	Peptostreptococcaceae	Acetoanaerobium	NA	14	NA	NO
+Bacteria	Firmicutes	Clostridia	Peptostreptococcales-Tissierellales	Anaerovoracaceae	Anaerovorax	NA	2	NA	NO
+Bacteria	Firmicutes	Clostridia	Peptostreptococcales-Tissierellales	Acidaminobacteraceae	Acidaminobacter	NA	2	NA	NO
+Bacteria	Firmicutes	Clostridia	Peptostreptococcales-Tissierellales	Fusibacteraceae	Fusibacter	NA	23	NA	NO
+Bacteria	Firmicutes	Clostridia	Peptostreptococcales-Tissierellales	Peptostreptococcaceae	Romboutsia	NA	172	NA	NO
+Bacteria	Firmicutes	Clostridia	Peptostreptococcales-Tissierellales	Peptostreptococcaceae	Proteocatella	NA	7	NA	NO
+Bacteria	Proteobacteria	Alphaproteobacteria	Ferrovibrionales	Ferrovibrionales	Taonella	NA	NA	NA	Unknown
+Bacteria	Cyanobacteria	Sericytochromatia	Sericytochromatia	Sericytochromatia	Sericytochromatia	NA	NA	NA	Unknown
+Bacteria	Firmicutes	Negativicutes	Acidaminococcales	Acidaminococcaceae	Genus of Acidaminococcaceae	NA	NA	NA	Unknown
+Bacteria	Firmicutes	Bacilli	Lactobacillales	Streptococcaceae	Streptococcus	NA	21852	YES	YES
+Bacteria	Firmicutes	Bacilli	Lactobacillales	Carnobacteriaceae	Trichococcus	NA	43	NA	NO
+Bacteria	Firmicutes	Bacilli	Lactobacillales	Family of Lactobacillales	Genus of Lactobacillales	NA	NA	NA	Unknown
+Bacteria	Firmicutes	Bacilli	Bacillales	Planococcaceae	Lysinibacillus	NA	334	NA	NO
+Bacteria	Firmicutes	Bacilli	Bacillales	Bacillaceae	Bacillus	NA	10181	YES	YES
+Bacteria	Firmicutes	Bacilli	Brevibacillales	Brevibacillaceae	Brevibacillus	NA	259	YES	YES
+Bacteria	Firmicutes	Bacilli	Erysipelotrichales	Erysipelotrichaceae	Erysipelothrix	NA	84	NA	NO
+Bacteria	Elusimicrobiota	Elusimicrobia	MVP-88	MVP-88	MVP-88	NA	NA	NA	Unknown
+Bacteria	Sumerlaeota	Sumerlaeia	Sumerlaeales	Sumerlaeaceae	Sumerlaea	NA	5	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Order of Gammaproteobacteria	Family of Gammaproteobacteria	Genus of Gammaproteobacteria	NA	NA	NA	Unknown
+Bacteria	FCPU426	FCPU426	FCPU426	FCPU426	FCPU426	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Blastocatellia	DS-100	DS-100	DS-100	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Blastocatellia	11-24	11-24	11-24	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Blastocatellia	Blastocatellales	Blastocatellaceae	Blastocatella	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Blastocatellia	Blastocatellales	Blastocatellaceae	JGI_0001001-H03	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Blastocatellia	Blastocatellales	Blastocatellaceae	Genus of Blastocatellaceae	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Kiritimatiellae	WCHB1-41	WCHB1-41	WCHB1-41	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Verrucomicrobiales	DEV007	DEV007	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Verrucomicrobiales	Rubritaleaceae	Luteolibacter	NA	222	NA	NO
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Verrucomicrobiales	Verrucomicrobiaceae	Genus of Verrucomicrobiaceae	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Verrucomicrobiales	Verrucomicrobiaceae	Brevifollis	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Verrucomicrobiales	Verrucomicrobiaceae	Prosthecobacter	NA	111	NA	NO
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Chthoniobacterales	Chthoniobacteraceae	Chthoniobacter	NA	30	NA	NO
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Pedosphaerales	Pedosphaeraceae	SH3-11	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Pedosphaerales	Pedosphaeraceae	DEV114	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Pedosphaerales	Pedosphaeraceae	Oikopleura	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Pedosphaerales	Pedosphaeraceae	DEV008	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Pedosphaerales	Pedosphaeraceae	Genus of Pedosphaeraceae	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Pedosphaerales	Pedosphaeraceae	Pedosphaeraceae	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Verrucomicrobiae	Pedosphaerales	Pedosphaeraceae	ADurb.Bin063-1	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Phycisphaerae	Pla1_lineage	Pla1_lineage	Pla1_lineage	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Phycisphaerae	Tepidisphaerales	CPla-3_termite_group	CPla-3_termite_group	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Phycisphaerae	Tepidisphaerales	Tepidisphaeraceae	Tepidisphaeraceae	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Phycisphaerae	Phycisphaerales	Phycisphaeraceae	SM1A02	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Phycisphaerae	Phycisphaerales	Phycisphaeraceae	CL500-3	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Class of Planctomycetota	Order of Planctomycetota	Family of Planctomycetota	Genus of Planctomycetota	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	BD7-11	BD7-11	BD7-11	BD7-11	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	OM190	OM190	OM190	OM190	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	028H05-P-BN-P5	028H05-P-BN-P5	028H05-P-BN-P5	028H05-P-BN-P5	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Planctomycetes	Pirellulales	Pirellulaceae	Genus of Pirellulaceae	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Planctomycetes	Pirellulales	Pirellulaceae	Rhodopirellula	NA	46	NA	NO
+Bacteria	Planctomycetota	Planctomycetes	Pirellulales	Pirellulaceae	Pirellula	NA	74	NA	NO
+Bacteria	Planctomycetota	Planctomycetes	Pirellulales	Pirellulaceae	Pir4_lineage	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Planctomycetes	Planctomycetales	Schlesneriaceae	Planctopirus	NA	6	NA	NO
+Bacteria	Planctomycetota	Planctomycetes	Planctomycetales	Family of Planctomycetales	Genus of Planctomycetales	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Planctomycetes	Planctomycetales	Rubinisphaeraceae	SH-PL14	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Planctomycetes	Planctomycetales	Rubinisphaeraceae	Genus of Rubinisphaeraceae	NA	NA	NA	Unknown
+Bacteria	Planctomycetota	Planctomycetes	Gemmatales	Gemmataceae	Fimbriiglobus	NA	4	NA	NO
+Bacteria	Planctomycetota	Planctomycetes	Gemmatales	Gemmataceae	Genus of Gemmataceae	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Vicinamibacteria	Subgroup_17	Subgroup_17	Subgroup_17	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Vicinamibacteria	Vicinamibacterales	Family of Vicinamibacterales	Genus of Vicinamibacterales	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Vicinamibacteria	Vicinamibacterales	Vicinamibacteraceae	Genus of Vicinamibacteraceae	NA	NA	NA	Unknown
+Bacteria	Acidobacteriota	Vicinamibacteria	Vicinamibacterales	Vicinamibacteraceae	Vicinamibacteraceae	NA	NA	NA	Unknown
+Bacteria	Hydrogenedentes	Hydrogenedentia	Hydrogenedentiales	Hydrogenedensaceae	Hydrogenedensaceae	NA	NA	NA	Unknown
+Bacteria	Latescibacterota	Latescibacterota	Latescibacterota	Latescibacterota	Latescibacterota	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	RBG-13-54-9	RBG-13-54-9	RBG-13-54-9	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	Anaerolineales	Anaerolineaceae	Leptolinea	NA	8	NA	NO
+Bacteria	Chloroflexi	Anaerolineae	Anaerolineales	Anaerolineaceae	Genus of Anaerolineaceae	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	Anaerolineales	Anaerolineaceae	Anaerolinea	NA	9	NA	NO
+Bacteria	Chloroflexi	Anaerolineae	SBR1031	SBR1031	SBR1031	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	SBR1031	Family of SBR1031	Genus of SBR1031	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	Ardenticatenales	Family of Ardenticatenales	Genus of Ardenticatenales	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	OLB14	OLB14	OLB14	OLB14	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	1-20	1-20	1-20	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	Caldilineales	Caldilineaceae	Genus of Caldilineaceae	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Anaerolineae	C10-SB1A	C10-SB1A	C10-SB1A	NA	NA	NA	Unknown
+Bacteria	Armatimonadota	Fimbriimonadia	Fimbriimonadales	Fimbriimonadaceae	Fimbriimonadaceae	NA	NA	NA	Unknown
+Bacteria	Chloroflexi	Chloroflexia	Chloroflexales	Roseiflexaceae	Kouleothrix	NA	7	NA	NO
+Bacteria	Chloroflexi	Chloroflexia	Chloroflexales	Roseiflexaceae	Genus of Roseiflexaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	SJA-28	SJA-28	SJA-28	SJA-28	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Kryptonia	Kryptoniales	BSV26	BSV26	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Ignavibacteria	Ignavibacteriales	Melioribacteraceae	IheB3-7	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Ignavibacteria	Ignavibacteriales	Ignavibacteriaceae	Ignavibacterium	NA	22	NA	NO
+Bacteria	Bacteroidota	Ignavibacteria	Ignavibacteriales	SR-FBR-L83	SR-FBR-L83	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Ignavibacteria	Ignavibacteriales	PHOS-HE36	PHOS-HE36	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Kapabacteria	Kapabacteriales	Kapabacteriales	Kapabacteriales	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Rhodothermia	Rhodothermales	Rhodothermaceae	Genus of Rhodothermaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Spirosomaceae	Lacihabitans	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Family of Cytophagales	Genus of Cytophagales	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Spirosomaceae	Runella	NA	22	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Microscillaceae	Chryseolinea	NA	39	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Microscillaceae	Genus of Microscillaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Microscillaceae	OLB12	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Cytophagaceae	Cytophaga	NA	6	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Rikenellaceae	Rikenellaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Williamwhitmaniaceae	Blvii28_wastewater-sludge_group	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Williamwhitmaniaceae	Williamwhitmania	NA	4	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Tannerellaceae	Macellibacteroides	NA	39	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Bacteroidaceae	Bacteroides	NA	7226	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Paludibacteraceae	Genus of Paludibacteraceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Paludibacteraceae	Paludibacter	NA	109	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	Sphingobacteriaceae	Pedobacter	NA	261	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	Family of Sphingobacteriales	Genus of Sphingobacteriales	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	KD3-93	KD3-93	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	LiUU-11-161	LiUU-11-161	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	NS11-12_marine_group	NS11-12_marine_group	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Family of Chitinophagales	Genus of Chitinophagales	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Taibaiella	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Sediminibacterium	NA	613	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Terrimonas	NA	42	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Lacibacter	NA	34	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Ferruginibacter	NA	418	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Niabella	NA	62	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Genus of Chitinophagaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Rurimicrobium	NA	13	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Chitinophagaceae	Edaphobaculum	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	37-13	37-13	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Saprospiraceae	Genus of Saprospiraceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Saprospiraceae	Lewinella	NA	13	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Saprospiraceae	Phaeodactylibacter	NA	15	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Saprospiraceae	Haliscomenobacter	NA	13	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Chitinophagales	Saprospiraceae	OLB8	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Rikenellaceae	Anaerocella	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	Cryomorphaceae	Vicingus	NA	15	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	GWF2-29-10	GWF2-29-10	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	NS9_marine_group	NS9_marine_group	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	Cryomorphaceae	Genus of Cryomorphaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Cytophagales	Cyclobacteriaceae	Marinoscillum	NA	17	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	Crocinitomicaceae	Crocinitomix	NA	13	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	Crocinitomicaceae	Fluviicola	NA	41	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	Flavobacteriaceae	Genus of Flavobacteriaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	Weeksellaceae	Chryseobacterium	NA	617	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Flavobacteriales	Flavobacteriaceae	Flavobacterium	NA	1891	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	AKYH767	AKYH767	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	env.OPS_17	env.OPS_17	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	KD1-131	KD1-131	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	Lentimicrobiaceae	Lentimicrobium	NA	72	NA	NO
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	Lentimicrobiaceae	Lentimicrobiaceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	SB-5	SB-5	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Bacteroidetes_vadinHA17	Bacteroidetes_vadinHA17	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Prolixibacteraceae	BSV13	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Prolixibacteraceae	Genus of Prolixibacteraceae	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Bacteroidales	Prolixibacteraceae	WCHB1-32	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Sphingobacteriales	ST-12K33	ST-12K33	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	Order of Bacteroidia	Family of Bacteroidia	Genus of Bacteroidia	NA	NA	NA	Unknown
+Bacteria	Bacteroidota	Bacteroidia	SM1A07	SM1A07	SM1A07	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Chlamydiae	Chlamydiales	cvE6	cvE6	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Chlamydiae	Chlamydiales	Simkaniaceae	Genus of Simkaniaceae	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Omnitrophia	Omnitrophales	Omnitrophales	Omnitrophales	NA	NA	NA	Unknown
+Bacteria	Verrucomicrobiota	Omnitrophia	Omnitrophales	Omnitrophaceae	Candidatus_Omnitrophus	NA	NA	NA	Unknown
+Bacteria	Spirochaetota	Leptospirae	Leptospirales	Leptospiraceae	Leptospira	NA	940	YES	YES
+Bacteria	Fibrobacterota	Fibrobacteria	Fibrobacterales	Fibrobacteraceae	Genus of Fibrobacteraceae	NA	NA	NA	Unknown
+Bacteria	Spirochaetota	Leptospirae	Leptospirales	Leptospiraceae	Turneriella	NA	13	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Aeromonadales	Aeromonadaceae	Aeromonas	NA	1912	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Enterobacterales	Yersiniaceae	Genus of Yersiniaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Alteromonadales	Alteromonadaceae	Alishewanella	NA	20	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Alteromonadales	Alteromonadaceae	Rheinheimera	NA	46	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Oceanospirillales	Pseudohongiellaceae	Pseudohongiella	NA	50	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Cellvibrionales	Halieaceae	OM60(NOR5)_clade	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Cellvibrionales	Halieaceae	Genus of Halieaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Cellvibrionales	Halieaceae	Halioglobus	NA	29	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Thiotrichales	Thiotrichaceae	Thiothrix	NA	39	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Rhodanobacteraceae	Genus of Rhodanobacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Rhodanobacteraceae	Ahniella	NA	3	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Rhodanobacteraceae	Aquimonas	NA	16	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Rhodanobacteraceae	Chiayiivirga	NA	1	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Xanthomonadaceae	Genus of Xanthomonadaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Xanthomonadaceae	Stenotrophomonas	NA	2009	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Xanthomonadaceae	Pseudoxanthomonas	NA	179	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Xanthomonadaceae	Thermomonas	NA	92	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Xanthomonadales	Rhodanobacteraceae	Dokdonella	NA	124	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Cellvibrionales	Spongiibacteraceae	BD1-7_clade	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Pseudomonadales	Moraxellaceae	Genus of Moraxellaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Methylococcales	Methylomonadaceae	Crenothrix	NA	3	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Cellvibrionales	Cellvibrionaceae	Cellvibrio	NA	65	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Pseudomonadales	Pseudomonadaceae	Pseudomonas	NA	19457	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Cellvibrionales	Porticoccaceae	C1-B045	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Gammaproteobacteria_Incertae_Sedis	Unknown_Family	Candidatus_Berkiella	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Ectothiorhodospirales	Thioalkalispiraceae	Genus of Thioalkalispiraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	CCM19a	CCM19a	CCM19a	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Steroidobacterales	Steroidobacteraceae	Genus of Steroidobacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	PLTA13	PLTA13	PLTA13	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Gammaproteobacteria_Incertae_Sedis	Unknown_Family	Acidibacter	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	R7C24	R7C24	R7C24	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Steroidobacterales	Steroidobacteraceae	Steroidobacter	NA	2	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Acidithiobacillales	Acidithiobacillaceae	KCM-B-112	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Ga0077536	Ga0077536	Ga0077536	NA	31	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Run-SP154	Run-SP154	Run-SP154	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Immundisolibacterales	Immundisolibacteraceae	Genus of Immundisolibacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Oceanospirillales	Halomonadaceae	Halomonas	NA	171	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Cellvibrionales	Cellvibrionaceae	Genus of Cellvibrionaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Oceanospirillales	Saccharospirillaceae	Oceanobacter	NA	15	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Oceanospirillales	Hahellaceae	Hahella	NA	9	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Pseudomonadales	Moraxellaceae	[Agitococcus]_lubricus_group	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Pseudomonadales	Moraxellaceae	Fluviicoccus	NA	4	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Pseudomonadales	Moraxellaceae	Acinetobacter	NA	14084	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Pseudomonadales	Moraxellaceae	Cavicella	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Competibacterales	Competibacteraceae	Candidatus_Contendobacter	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Competibacterales	Competibacteraceae	Candidatus_Competibacter	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	SC-I-84	SC-I-84	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Nitrosomonadaceae	MND1	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Nitrosomonadaceae	Nitrosomonas	NA	266	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	TRA3-20	TRA3-20	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Burkholderiaceae	Lautropia	NA	60	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Burkholderiaceae	Genus of Burkholderiaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Oxalobacteraceae	Genus of Oxalobacteraceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Aquaspirillaceae	Aquaspirillum	NA	1	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Chitinimonadaceae	Chitinivorax	NA	2	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Aquaspirillaceae	Rivicola	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Oxalobacteraceae	Undibacterium	NA	85	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Neisseriaceae	Uruburuella	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Chitinimonadaceae	Chitinimonas	NA	11	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Neisseriaceae	Genus of Neisseriaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Nitrosomonadaceae	GOUTA6	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Nitrosomonadaceae	Genus of Nitrosomonadaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Nitrosomonadaceae	Ellin6067	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Thauera	NA	115	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Methyloversatilis	NA	40	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Uliginosibacterium	NA	5	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Zoogloea	NA	64	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Sulfuritalea	NA	83	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Azovibrio	NA	30	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	B1-7BS	B1-7BS	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Gallionellaceae	Candidatus_Nitrotoga	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Sterolibacterium	NA	6	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Ferribacterium	NA	NA	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Azonexus	NA	171	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Genus of Rhodocyclaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Dechloromonas	NA	NA	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Family of Burkholderiales	Genus of Burkholderiales	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Nitrosomonadaceae	oc32	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Hydrogenophilaceae	Genus of Hydrogenophilaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Sutterellaceae	AAP99	NA	4	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Azospira	NA	16	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Candidatus_Accumulibacter	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Rhodocyclaceae	Propionivibrio	NA	59	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Hydrogenophaga	NA	191	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Brachymonas	NA	25	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Ideonella	NA	37	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Aquabacterium	NA	159	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Sphaerotilus	NA	51	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Leptothrix	NA	NA	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Pseudorhodoferax	NA	10	NA	NO
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Giesbergeria	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Comamonas	NA	632	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Simplicispira	NA	126	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Acidovorax	NA	248	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Delftia	NA	NA	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Genus of Comamonadaceae	NA	NA	NA	Unknown
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Polaromonas	NA	253	YES	YES
+Bacteria	Proteobacteria	Gammaproteobacteria	Burkholderiales	Comamonadaceae	Rhodoferax	NA	583	YES	YES

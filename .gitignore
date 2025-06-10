@@ -3,6 +3,6 @@
 .RData
 .Ruserdata
 data/raw/
-data/raw/classifier
+data/classifier
 results/
 renv/library

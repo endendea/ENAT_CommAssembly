@@ -1,11 +1,11 @@
 ---
-title: "YXIN_proj1_Q16712_iCAMP_TRIAL4"
+title: "YXIN_proj1_Q16712_microbial_community_analysis"
 author: "ENAT/Enden_Dea_Nataya"
 date: "2025-04-29"
 output: html_document
 ---
 
-### iCAMP analysis with all samples from YXIN project
+### Microbial community analysis with all samples from YXIN project
 ## Phylogenetic-binning based on all samples available
 
 ```{r , eval=TRUE, echo=T, include=T, message=FALSE, warning=FALSE}
@@ -328,6 +328,34 @@ psdata_lowN_rel <-
 
 # melt the phyloseq object into a df-like structure
 ps_lowN <- psmelt(psdata_lowN)
+
+# Save the data for iCAMP analysis
+if (!dir.exists(here("data", "processed", "for_iCAMP"))) dir.create(here("data", "processed", "for_iCAMP"), recursive = TRUE)
+saveRDS(psdata_lowN, file = here("data", "processed", "for_iCAMP", "YXIN_psdata_lowN.rds"))
+
+
+#select sample only for initial WAS (t=0h)
+psdata_INIT <-
+    prune_taxa(
+      taxa_sums(
+        subset_samples(psdata_0.05pct, time == "0h"))>0, 
+        subset_samples(psdata_0.05pct, time == "0h"))
+
+# Save the data for iCAMP analysis
+saveRDS(psdata_INIT, file = here("data", "processed", "for_iCAMP", "YXIN_psdata_INIT.rds"))
+
+# Select time-series data
+# BATH and ALMERE data only
+psdata_AB <- psdata_0.05pct %>%
+  subset_samples(grepl("Bath|Almere", sludge_source)) %>%
+  prune_taxa(taxa_sums(.) > 0, .)
+
+psdata_AB_filtered <- psdata_AB %>%
+  subset_samples(condition != "High_N" | (condition == "High_N" & time == "0h")) %>%
+  prune_taxa(taxa_sums(.) > 0, .)
+
+# Save the data for iCAMP analysis
+saveRDS(psdata_AB_filtered, file = here("data", "processed", "for_iCAMP", "YXIN_psdata_AlmereBath.rds"))
 
 
 ```

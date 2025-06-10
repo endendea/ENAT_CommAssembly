@@ -1,0 +1,117 @@
+---
+title: "Genus with PhaC"
+author: "ENAT"
+date: "2025-06-05"
+output: html_document
+---
+
+```{r , eval=TRUE, echo=T, include=T, message=FALSE, warning=FALSE}
+
+library(here)
+
+# set optional parameters
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE, 
+                      message = FALSE,
+                      root.dir = here())
+options(scipen = 999, digits = 3)
+
+```
+
+``` {r}
+
+library(dplyr)
+library(tidyr)
+
+```
+
+``` {r upload the data, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# MiDAS database
+col_name <- c("ID", "tax_lable")
+
+midas <- as.data.frame(read_tsv(here("data", "processed", "for_iCAMP",  "QIIME_MiDAS_tax.txt")))
+
+# assign column names
+colnames(midas) <- col_name
+
+midas <- midas %>%
+  separate(., col = tax_lable,
+           into = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"),
+           sep = ";",
+           remove = TRUE  # Keep original column if you want
+  ) %>%
+  mutate(Genus_cleaned = substr(Genus, 5, length(Genus)))
+
+was_genera <- unique(midas$Genus_cleaned) %>%
+  as_tibble() %>%
+  filter(!grepl("midas", value, ignore.case = TRUE)) %>%
+  mutate(Genus_cleaned = str_replace(value, "^Ca_", ""))
+
+was_genera <- midas %>%
+  mutate(Genus_cleaned = str_replace(Genus_cleaned, "^Ca_", "")) %>%
+  filter(!str_detect(Genus_cleaned, "midas")) %>%
+  distinct(Genus_cleaned)  # get unique values
+
+# KEGG data
+kegg <- as.data.frame(read_tsv(here("data", "processed", "for_iCAMP",  "KEGG_Genus_PhaC.txt")))
+
+PhaC_list <- was_genera %>%
+  mutate(PhaC = if_else(Genus_cleaned %in% kegg$Genus, "YES", "NO"))
+  
+colnames(PhaC_list)[colnames(PhaC_list) == "Genus_cleaned"] <- "Genus"
+
+# Or save as TSV
+write.table(PhaC_list, here("data", "processed", "for_iCAMP",  "PhaC_kegg_midas.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+
+```{r}
+
+gtdb <- as.data.frame(read_tsv(here("data", "processed", "for_iCAMP",  "bac120_taxonomy_r226.tsv")))
+
+
+# assign column names
+colnames(gtdb) <- col_name
+
+gtdb_cleaned <- gtdb %>%
+  separate(., col = tax_lable,
+           into = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"),
+           sep = ";",
+           remove = TRUE  # Keep original column if you want
+  ) %>%
+  mutate(Genus_cleaned = substr(Genus, 4, length(Genus)))
+
+genus_factor <- unique(gtdb_cleaned$Genus_cleaned)
+  
+gtdb_summary <- gtdb_cleaned %>%
+  select(Genus_cleaned) %>%
+  mutate(Genus_cleaned = str_extract(Genus_cleaned, "^[^_]+")) %>%
+  mutate(Genus_cleaned = factor(Genus_cleaned, levels = genus_factor)) %>%
+  group_by(Genus_cleaned) %>%
+  summarise(nr_genomes = n(), .groups = "drop")
+
+colnames(gtdb_summary)[colnames(gtdb_summary) == "Genus_cleaned"] <- "Genus"
+  
+# Or save as TSV
+write.table(gtdb_summary, here("data", "processed", "for_iCAMP", "phac_gtdb.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+# merge ASV, kegg, and gtdb data
+classified <- tax_table(psdata_AB_genus) %>%
+  as.data.frame() %>%
+  left_join(gtdb_summary, by = "Genus") %>%
+  left_join(kegg, by = "Genus") %>%
+  mutate(
+    PhaC_status = case_when(
+      !is.na(PhaC_gene) ~ "YES",                    # If KEGG matched
+      is.na(PhaC_gene) & !is.na(nr_genomes) ~ "NO",    # Absent but has enough genomes
+      TRUE ~ "Unknown"                              # All else
+    )
+  )
+
+# Or save as TSV
+write.table(classified, here("data", "processed", "for_iCAMP", "PhaC_kegg_gtdb.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
