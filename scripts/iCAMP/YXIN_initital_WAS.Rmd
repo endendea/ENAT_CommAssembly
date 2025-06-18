@@ -61,6 +61,8 @@ library(data.table)
 library(NST)
 library(RVAideMemoire)
 
+source(here("scripts", "iCAMP", "handytool.r"))
+
 ```
 
 ## iCAMP analysis (INITIAL WAS)
@@ -212,8 +214,10 @@ save.file(INIT_Binwt,prefix=prefix,folder=save.wd, filename = "BinRelAbundance")
 
 ```
 
-### Preparing data for iToL
-``` {r extract phylo tree for iToL, message=F, echo=T, eval=T, warning=F, include=T, cache=T}}
+
+### genus abundance for iToL
+
+``` {r PhaCmessage=F, echo=T, eval=T, warning=F, include=T, cache=T}
 
 # agglomerate taxa to genus level
 psdata_INIT_genus <- psdata_INIT %>%
@@ -227,11 +231,83 @@ new_tree <- phy_tree(psdata_INIT_genus)
 # Save to Newick format
 write.tree(new_tree, file = paste0(save.wd, "/YXIN_INIT_genus_output_tree.newick"))
 
+# melt the phyloseq object into a df-like structure
+ps_genus <- psmelt(psdata_INIT_genus)
+
+# count n genera n = 426
+ps_genus %>% 
+  as_tibble() %>% 
+  mutate(Genus = factor(Genus)) %>% 
+  pull(Genus) %>% 
+  levels() %>% 
+  length() %>%
+  mutate(Genus = Genus %>%
+           # Remove content in square brackets (including brackets)
+           str_remove_all("\\[.*?\\]") %>%
+           # Replace space with "_" if there are 2+ words
+           if_else(str_count(., "\\s+") >= 1, str_replace_all(., " ", "_"), .) %>%
+           # Replace "(" with "-"
+           str_replace_all("\\(", "-") %>%
+           # Handle ")": remove if at end, replace with "-" otherwise
+           str_replace_all("\\)(?=$)", "") %>%         # Remove if at end
+           str_replace_all("\\)", "-")                 # Replace other occurrences
+         )
+  
+
 # add column ASV to the INIT_clas.bin
 INIT_clas.bin_genus <- INIT_clas.bin %>%
   mutate(ASV = rownames(.)) %>%
-  select(ASV, Bin) %>%
+  select(ASV, Bin, Genus) %>%
   mutate(Bin = tolower(Bin))
+
+# merge ASV and Bin data
+ASV_table <- tax_table(psdata_INIT_genus) %>%
+  as.data.frame() %>%
+  mutate(ASV = rownames(.)) %>%
+  select(ASV) %>%
+  left_join(INIT_clas.bin_genus, by = "ASV") %>%
+  mutate(Genus = Genus %>%
+           # Remove content in square brackets (including brackets)
+           str_remove_all("\\[.*?\\]") %>%
+           # Replace space with "_" if there are 2+ words
+           if_else(str_count(., "\\s+") >= 1, str_replace_all(., " ", "_"), .) %>%
+           # Replace "(" with "-"
+           str_replace_all("\\(", "-") %>%
+           # Handle ")": remove if at end, replace with "-" otherwise
+           str_replace_all("\\)(?=$)", "") %>%         # Remove if at end
+           str_replace_all("\\)", "-")                 # Replace other occurrences
+         )
+  
+# Loop
+
+abundance_list <- list()
+source_list <- unique(ps_genus$sludge_source)
+
+for (grp in source_list) {
+    
+  # Filter and normalize abundance within each Sample
+  abundance_list[[grp]] <- ps_genus %>% 
+    filter(sludge_source == grp) %>% 
+    select(Sample, Abundance, Genus) %>%
+    left_join(ASV_table, by = "Genus") %>%
+    group_by(Sample, Genus) %>%
+    summarise(Abundance = sum(Abundance), .groups = "drop_last") %>%
+    mutate(Abundance = Abundance / sum(Abundance) * 100) %>%
+    ungroup() %>%
+    mutate(SludgeSource = grp) %>%
+    left_join(ASV_table, by = "Genus")
+}
+
+# Combine to one long data frame
+abundance_all <- bind_rows(abundance_list)
+
+# Or save as TSV
+write.table(abundance_all, paste0(save.wd, "/YXIN_0h_genus_abundances.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+### Preparing comm assembly data for iToL
+``` {r extract phylo tree for iToL, message=F, echo=T, eval=T, warning=F, include=T, cache=T}}
 
 Ptk_list <- list()
 group_list <- unique(INIT_Ptk$Group)
@@ -248,180 +324,22 @@ for (grp in group_list) {
                 values_from = "Importance") %>%
     select(Bin:DR) %>%
     mutate(Group = grp) %>%
-    right_join(INIT_clas.bin_genus, by = "Bin")
+    right_join(ASV_table, by = "Bin")
 }
 
 # Combine if needed
 Ptk_all <- bind_rows(Ptk_list)
 
 # Or save as TSV
-write.table(Ptk_all, paste0(save.wd, "/YXIN_INIT_ProcImp_iToL.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(Ptk_all, paste0(save.wd, "/YXIN_0h_ProcImp_iToL.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 ```
 
 
-### genus abundance for iToL
+## iToL data with genus ID as tip labels
 
-``` {r PhaCmessage=F, echo=T, eval=T, warning=F, include=T, cache=T}
-
-# melt the phyloseq object into a df-like structure
-ps_genus <- psmelt(psdata_INIT_genus)
-
-
-# count n genera n = 426
-ps_genus %>% 
-  as_tibble() %>% 
-  mutate(Genus = factor(Genus)) %>% 
-  pull(Genus) %>% 
-  levels() %>% 
-  length()
-
-tax_table_df_filtered <- tax_table_df %>%
-  select(., Genus:Bin)
-
-
-# merge ASV and Bin data
-ASV_table <- tax_table(psdata_INIT_genus) %>%
-  as.data.frame() %>%
-  mutate(ASV = rownames(.)) %>%
-  select(ASV, Genus) %>%
-  left_join(INIT_clas.bin_genus, by = "ASV")
-  
-# Loop
-
-abundance_list <- list()
-source_list <- unique(ps_genus$sludge_source)
-
-for (grp in source_list) {
-    
-  # Filter and normalize abundance within each Sample
-  abundance_list[[grp]] <- ps_genus %>% 
-    filter(sludge_source == grp) %>% 
-    select(Sample, Abundance, Genus) %>%
-    left_join(tax_table_df_filtered, by = "Genus") %>%
-    group_by(Sample, Genus) %>%
-    summarise(Abundance = sum(Abundance), .groups = "drop_last") %>%
-    mutate(Abundance = Abundance / sum(Abundance) * 100) %>%
-    mutate(log10 = log10(Abundance + 1e-6)) %>%
-    ungroup() %>%
-    mutate(SludgeSource = grp, Substrate = subs) %>%
-    left_join(ASV_table, by = "Genus")
-}
-
-# Combine to one long data frame
-abundance_all <- bind_rows(abundance_list)
-
-# Or save as TSV
-write.table(abundance_all, paste0(save.wd, "/YXIN_INIT_genus_abundances.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-
-```
-
-### Dataset format for iToL
-
-``` {r iToL, message=F, echo=T, eval=T, warning=F, include=T, cache=T}
-
-# Heatmap for genus abundance per sample
-
-abundance_list <- list()
-source_list <- unique(ps_genus$sludge_source)
-substrate_list <- unique(ps_genus$substrate)
-
-for (grp in source_list) {
-    
-  df <- abundance_all %>%
-    filter(SludgeSource == grp) %>%
-    select(ASV, Sample, log10) %>%
-    pivot_wider(names_from = Sample, values_from = log10)
-
-  # Get dynamic sample names
-  sample_cols <- colnames(df)[-1]  # Assuming ASV is the first column
-  sample_labels <- paste(sample_cols, collapse = "\t")
-    
-  # Create header lines with glue for dynamic text
-  header_lines <- c(
-    "DATASET_HEATMAP",
-    "SEPARATOR\tTAB",
-    glue("DATASET_LABEL\tabundance per sample {grp}"),
-    glue("FIELD_LABELS\t{sample_labels}"),
-    "COLOR_MIN\t#FFFFFF",
-    "COLOR_MAX\t#FF0000",
-    "USE_MID_COLOR\t1",
-    "COLOR_MID\t#FF8080",
-    "DATA"
-  )
-    
-  # Set the output path
-  output_file <- glue("{save.wd}/iToL_{grp}_abundance.tsv")
-    
-  # Write header and data
-  writeLines(header_lines, con = output_file)
-  write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
-    
-  # Store to list if needed
-    abundance_list[[grp]] <- df
-}
-
-#####################################################
-# Relative importance
-
-relImp_list <- list()
-grp_list <- unique(Ptk_all$Group)
-
-for (grp in grp_list) {
-  df <- Ptk_all %>%
-    filter(Group == grp) %>%
-    select(ASV, HeS:DR)
-    
-  # Get dynamic sample names
-  index_cols <- colnames(df)[-1]  # Assuming ASV is the first column
-  index_labels <- paste(index_cols, collapse = "\t")
-      
-  # Create header lines with glue for dynamic text
-  header_lines <- c(
-    "DATASET_MULTIBAR",
-    "SEPARATOR\tTAB",
-    glue("DATASET_LABEL\tProcess Relative Importance {grp}"),
-    glue("FIELD_LABELS\t{index_labels}"),
-    "FIELD_COLORS\t#FFEE58\t#7492CF\t#FFA000\t#D0D1E6\t#21455e",
-    "DATASET_SCALE\t100\t100\t100\t100\t100",
-    "DATA"
-  )
-    
-  # Set the output path
-  output_file <- glue("{save.wd}/iToL_{grp}_relImp.tsv")
-    
-  # Write header and data
-  writeLines(header_lines, con = output_file)
-  write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
-    
-  # Store to list if needed
-  relImp_list[[grp]] <- df
-}
-
-#################################################################
-
-# Format for ASV LABELs
-
-header_lines <- c(
-  "LABELS", 
-  "SEPARATOR TAB", 
-  "DATA"
-)
-
-df <- ASV_table %>%
-  select(ASV, Genus)
-
-# Set the output path
-output_file <- glue("{save.wd}/iToL_labels.tsv")
-    
-# Write header and data
-writeLines(header_lines, con = output_file)
-write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
-
-##############################################
-
-# Format for Bins LABELs
+``` {r}
 
 # Get unique Bin names
 Bin_names <- unique(ASV_table$Bin)
@@ -459,10 +377,10 @@ header_lines <- c(
 # Join color info into your data
 df <- ASV_table %>%
   left_join(bin_colors_df, by = "Bin") %>%
-  select(ASV, color, Bin)
+  select(Genus, color, Bin)
 
 # Set the output path
-output_file <- glue("{save.wd}/iToL_Bins.tsv")
+output_file <- glue("{save.wd}/iToL_Bins_og_genusID.tsv")
 
 # Write header
 write_lines(header_lines, file = output_file)
@@ -470,36 +388,119 @@ write_lines(header_lines, file = output_file)
 # Write data (without column names)
 write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
 
-########################################
+#####################################################
+# Relative importance
+
+relImp_list <- list()
+grp_list <- unique(Ptk_all$Group)
+
+for (grp in grp_list) {
+  df <- Ptk_all %>%
+    filter(Group == grp) %>%
+    select(Genus, HeS:DR) %>%
+    left_join(ASV_table, by = "Genus" ) %>%
+    select(Genus, HeS:DR)
+    
+  # Get dynamic sample names
+  index_cols <- colnames(df)[-1]  # Assuming ASV is the first column
+  index_labels <- paste(index_cols, collapse = "\t")
+      
+  # Create header lines with glue for dynamic text
+  header_lines <- c(
+    "DATASET_MULTIBAR",
+    "SEPARATOR\tTAB",
+    glue("DATASET_LABEL\tProcess Relative Importance {grp}"),
+    glue("FIELD_LABELS\t{index_labels}"),
+    "FIELD_COLORS\t#FFEE58\t#7492CF\t#FFA000\t#D0D1E6\t#21455e",
+    "DATASET_SCALE\t100\t100\t100\t100\t100",
+    "DATA"
+  )
+    
+  # Set the output path
+  output_file <- glue("{save.wd}/iToL_{grp}_relImp_og_genusID.tsv")
+    
+  # Write header and data
+  writeLines(header_lines, con = output_file)
+  write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
+    
+  # Store to list if needed
+  relImp_list[[grp]] <- df
+  }
+
+#########################################################
+
+# Heatmap for genus abundance per sample
+
+abundance_list <- list()
+source_list <- unique(ps_genus$sludge_source)
+substrate_list <- unique(ps_genus$substrate)
+
+for (grp in source_list) {
+    
+  df <- ASV_table %>%
+    left_join(abundance_all, by = "Genus") %>%
+    filter(SludgeSource == grp) %>%
+    select(Genus, Sample, Abundance) %>%
+    pivot_wider(names_from = Sample, values_from = Abundance)
+
+  # Get dynamic sample names
+  sample_cols <- colnames(df)[-1]  # Assuming ASV is the first column
+  sample_labels <- paste(sample_cols, collapse = "\t")
+    
+  # Create header lines with glue for dynamic text
+  header_lines <- c(
+    "DATASET_HEATMAP",
+    "SEPARATOR\tTAB",
+    glue("DATASET_LABEL\tabundance per sample {grp}"),
+    glue("FIELD_LABELS\t{sample_labels}"),
+    "COLOR_MIN\t#FFFFFF",
+    "COLOR_MAX\t#FF0000",
+    "USE_MID_COLOR\t1",
+    "COLOR_MID\t#FF8080",
+    "DATA"
+  )
+    
+  # Set the output path
+  output_file <- glue("{save.wd}/iToL_{grp}_abundance_og_genusID.tsv")
+    
+  # Write header and data
+  writeLines(header_lines, con = output_file)
+  write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
+    
+  # Store to list if needed
+    abundance_list[[grp]] <- df
+}
+
+
+##################################
 
 # Phac Status
 
-phac <- read_tsv(here("data", "processed", "for_iCAMP", "PhaC_kegg_gtdb.txt"))
+phac <- read_tsv(here("data", "processed", "for_iCAMP", "PhaC_kegg_gtdb_ver16June.txt"))
 
-phac_status <- c("YES", "NO", "Unknown")
-phac_col <- c("#81C784", "#FF0000", "#E0E0E0")
+phac_status <- c("YES", "Unknown")
+phac_col <- c("#81C784", "#E0E0E0")
 
 df <- phac %>%
   left_join(ASV_table, by = "Genus") %>%
   mutate(color = case_when(
     PhaC_status == "YES" ~ phac_col[1],
-    PhaC_status == "NO" ~ phac_col[2],
-    PhaC_status == "Unknown" ~ phac_col[3])) %>%
-  select(ASV, color, PhaC_status)
+    PhaC_status == "Unknown" ~ phac_col[2])) %>%
+  select(Genus, color, PhaC_status)
 
 # write a tsv
 header_lines <- c(
   "DATASET_COLORSTRIP", 
   "SEPARATOR\tTAB",
-  "DATASET_LABEL\tPhaC",
+  "DATASET_LABEL\tPhaC16June",
   "LEGEND_TITLE\tPhaC status",
-  glue("LEGEND_COLORS\t{phac_col}"),
-  glue("LEGEND_LABELS\t{phac_status}"),
+  glue("LEGEND_COLORS\t{glue_collapse(phac_col, sep = '\t')}"),
+  glue("LEGEND_LABELS\t{glue_collapse(phac_status, sep = '\t')}"),
   "DATA"
 )
 
 # Set the output path
-output_file <- glue("{save.wd}/iToL_PhaC_status.tsv")
+output_file <- glue("{save.wd}/iToL_PhaC_status_genusID.tsv")
 
 # Write header
 write_lines(header_lines, file = output_file)
@@ -507,7 +508,7 @@ write_lines(header_lines, file = output_file)
 # Write data (without column names)
 write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
 
+
+
 ```
-
-
 

@@ -25,6 +25,16 @@ library(tidyr)
 
 ```
 
+
+``` {r}
+
+psdata_lowN <- readRDS(here("data", "processed", "for_iCAMP", "YXIN_psdata_lowN.rds"))
+
+psdata_genus426 <- psdata_lowN %>%
+  tax_glom(., "Genus")
+
+```
+
 ``` {r upload the data, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
 
 # MiDAS database
@@ -97,21 +107,99 @@ colnames(gtdb_summary)[colnames(gtdb_summary) == "Genus_cleaned"] <- "Genus"
 # Or save as TSV
 write.table(gtdb_summary, here("data", "processed", "for_iCAMP", "phac_gtdb.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
+```
+
+``` {r kegg & gtdb confirmed}
+
+# species with PhaC gene from GTDB database (Pieter's data)
+gtdb_pos <- as.data.frame(read_csv(here("data", "processed", "for_iCAMP",  "phaC_gene_occurrence_Bacteria_annotree_All-occurrence-hit.csv"))) %>%
+  mutate(ID = gtdbId) %>%
+  select(ID) %>%
+  left_join(gtdb_cleaned, by = "ID") %>%
+  select(ID, Genus_cleaned) %>%
+  drop_na()
+
+# Extract unique Genus_cleaned values
+gtdb_pos_genera <- tibble(Genus = unique(gtdb_pos$Genus_cleaned)) %>%
+  mutate(gtdb = "YES")
 
 # merge ASV, kegg, and gtdb data
-classified <- tax_table(psdata_AB_genus) %>%
+classified <- tax_table(psdata_genus426) %>%
   as.data.frame() %>%
-  left_join(gtdb_summary, by = "Genus") %>%
+  left_join(gtdb_pos_genera, by = "Genus") %>%
   left_join(kegg, by = "Genus") %>%
   mutate(
     PhaC_status = case_when(
-      !is.na(PhaC_gene) ~ "YES",                    # If KEGG matched
-      is.na(PhaC_gene) & !is.na(nr_genomes) ~ "NO",    # Absent but has enough genomes
-      TRUE ~ "Unknown"                              # All else
+      kegg == "YES" | gtdb == "YES" ~ "YES",
+      TRUE ~ "Unknown"
     )
-  )
+  ) %>%
+  mutate(Genus = Genus %>%
+           # Remove content in square brackets (including brackets)
+           str_remove_all("\\[.*?\\]") %>%
+           # Replace space with "_" if there are 2+ words
+           if_else(str_count(., "\\s+") >= 1, str_replace_all(., " ", "_"), .) %>%
+           # Replace "(" with "-"
+           str_replace_all("\\(", "-") %>%
+           # Handle ")": remove if at end, replace with "-" otherwise
+           str_replace_all("\\)(?=$)", "") %>%         # Remove if at end
+           str_replace_all("\\)", "-")                 # Replace other occurrences
+         )
 
 # Or save as TSV
-write.table(classified, here("data", "processed", "for_iCAMP", "PhaC_kegg_gtdb.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(classified, here("data", "processed", "for_iCAMP", "PhaC_kegg_gtdb_ver16June.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+```
+
+``` {r prepare PhaC list for iToL}
+
+genus_426 <- tax_table(psdata_genus426) %>%
+  as.data.frame() %>%
+  mutate(ASV = rownames(.)) %>%
+  select(Genus) %>%
+  mutate(Genus = Genus %>%
+           # Remove content in square brackets (including brackets)
+           str_remove_all("\\[.*?\\]") %>%
+           # Replace space with "_" if there are 2+ words
+           if_else(str_count(., "\\s+") >= 1, str_replace_all(., " ", "_"), .) %>%
+           # Replace "(" with "-"
+           str_replace_all("\\(", "-") %>%
+           # Handle ")": remove if at end, replace with "-" otherwise
+           str_replace_all("\\)(?=$)", "") %>%         # Remove if at end
+           str_replace_all("\\)", "-")                 # Replace other occurrences
+         )
+
+# Phac Status
+
+phac_status <- c("YES", "Unknown")
+phac_col <- c("#81C784", "#E0E0E0")
+
+df <- genus_426 %>%
+  left_join(classified, by = "Genus") %>%
+  mutate(color = case_when(
+    PhaC_status == "YES" ~ phac_col[1],
+    PhaC_status == "Unknown" ~ phac_col[2])) %>%
+  select(Genus, color, PhaC_status)
+
+# write a tsv
+header_lines <- c(
+  "DATASET_COLORSTRIP", 
+  "SEPARATOR\tTAB",
+  "DATASET_LABEL\tPhaC16June",
+  "LEGEND_TITLE\tPhaC status",
+  glue("LEGEND_COLORS\t{glue_collapse(phac_col, sep = '\t')}"),
+  glue("LEGEND_LABELS\t{glue_collapse(phac_status, sep = '\t')}"),
+  "DATA"
+)
+
+# Set the output path
+output_file <- glue(here("results", "output_data", "iCAMP_48h", "iToL_PhaC_status_426.tsv"))
+
+# Write header
+write_lines(header_lines, file = output_file)
+
+# Write data (without column names)
+write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
 
 ```

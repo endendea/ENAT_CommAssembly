@@ -1,4 +1,4 @@
-Genus	PhaC_gene
+Genus	kegg
 Abyssibius	YES
 Accumulibacter	YES
 Achromobacter	YES

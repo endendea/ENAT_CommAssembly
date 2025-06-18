@@ -393,6 +393,24 @@ otu_table(YXIN_matrix_rare) <- otu_rare # replace old otu_table with rarefied da
 psdata_genus <- psdata_lowN %>%
   tax_glom(., "Genus")
 
+# Step 1: Extract ASV-to-Genus mapping
+asv_to_genus <- as.character(tax_table(psdata_genus)[, "Genus"])
+asv_to_genus[is.na(asv_to_genus)] <- "Unclassified"  # Replace NAs
+names(asv_to_genus) <- rownames(tax_table(psdata_genus))
+
+# Step 2: Match genus names to the order of the tree's tip labels
+tree_tips <- phy_tree(psdata_genus)$tip.label
+matched_genera <- asv_to_genus[tree_tips]
+
+# Step 4: Assign the new unique genus labels to the tree
+tree426 <- phy_tree(psdata_genus)
+tree426$tip.label <- as.matrix(matched_genera)
+
+# Save the relabeled tree
+write.tree(tree426, file = "relabeled_tree_by_genus426.nwk")
+
+###################################
+
 # rarefy
 alpha <- estimate_richness(psdata_genus, measures = c("observed", "Shannon", "Chao1", "Simpson"))
 alpha$Sample <- row.names(alpha) # add additional "Sample" colomn to help for diversity x metadata merging
@@ -1137,6 +1155,15 @@ print(plot_distances_Genus_lowN)
 
 ggsave(plot_distances_Genus_lowN, 
        filename = here("results", "figures", glue("{proj}_community_distances_within_experiments.pdf")), width = 12, height = 9)
+
+```
+
+
+``` {r}
+ 
+# save the phylogenetic tree
+
+
 
 ```
 
