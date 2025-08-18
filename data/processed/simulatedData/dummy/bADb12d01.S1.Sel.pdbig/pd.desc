@@ -1,5 +1,0 @@
-new("big.matrix.descriptor", description = list(sharedType = "FileBacked", 
-    filename = "pd.bin", dirname = "C:/Dea/Master/Internship/Microbial ecology of PHA production from activated sludge/ENAT_CommAssembly/data/processed/simulatedData/dummy/bADb12d01.S1.Sel.pdbig/", 
-    totalRows = 1035L, totalCols = 1035L, rowOffset = c(0, 1035
-    ), colOffset = c(0, 1035), nrow = 1035, ncol = 1035, rowNames = NULL, 
-    colNames = NULL, type = "double", separated = FALSE))

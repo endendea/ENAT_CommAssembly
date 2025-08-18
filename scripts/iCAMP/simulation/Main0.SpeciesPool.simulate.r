@@ -9,10 +9,7 @@ rm(list=ls())
 
 library(here)
 
-dir.create(here("results", "output_data", "iCAMP_simulation"), recursive = FALSE)
-
-input_wd = here("data", "processed", "for_iCAMP") # the folder saving the input and output files
-output_wd = here("results", "output_data", "iCAMP_simulation")
+wd = here("data", "processed", "SimulatedData", "SpeciesPool")
 code.wd= here("scripts", "iCAMP", "simulation")# the folder save simulation functions
 
 source(paste0(code.wd,"/tools.r"))
@@ -22,32 +19,46 @@ library(vegan)
 library(iCAMP)
 library(glue)
 library(ape)
-wd = here()
 
 
 ###########################################################
 # 1 # 
 # 1.1 # tree
-tree.file = glue(input_wd, "/YXIN_genus_output_tree.newick") # phylogenetic tree from YXIN dataset (426 genera)
+tree.file = glue(wd, "/YXIN_lowN_2094ASV.nwk") # phylogenetic tree from YXIN lowN dataset (2094ASVs)
 tree <- read.tree(tree.file)
 #tree$tip.label=paste0("OTU",tree$tip.label) # set species IDs as OTU1 ... OTU1139
+
+# Check if the tree is binary (no polytomies)
+if (!is.binary(tree)) {
+  tree <- ape::multi2di(tree)  # randomly resolve polytomies
+}
+
+# Check for zero branch lengths
+if (any(tree$edge.length == 0)) {
+  # Add a small jitter to zero-length branches
+  tree$edge.length[tree$edge.length == 0] <- 1e-8
+}
+
+#Verify no zero-length branches remain
+any(tree$edge.length == 0)
+
 drt=iCAMP::tree.droot(tree,nworker = 4)
 (drt.max=max(drt$distRoot)) # check max distance to root
 tree$edge.length=tree$edge.length/drt.max # correct the distance to root, to range within 1.
 tree
-pd=iCAMP::pdist.big(tree = tree, wd = output_wd, output = TRUE, nworker = 4)
+pd=iCAMP::pdist.big(tree = tree, wd = wd, output = TRUE, nworker = 4)
 tree.save=list(tree=tree,pd=pd)
-save(tree.save,file=paste0(output_wd,"/JS.tree.pd.rda"))
+save(tree.save,file=paste0(wd,"/YXIN.lowN.tree.pd.rda"))
   
 # 1.2 # OPEN, optimum environment, the key trait
 # 1.2.1 # method 1: Stegen 2015, low phylogenetic signal across tree
 opens=list()
-enop.old=lazyopen("All_pops_sim_10002.csv") # data file from Stegen et al 2015
-enopv.old=enop.old[,2]
-names(enopv.old)=paste0("OTU",rownames(enop.old))
-hist(enop.old[,2],breaks=100)
-(Kvalue.old=phytools::phylosig(tree, x=enopv.old, method="K", test=FALSE, nsim=1000))
-opens$JS=list(openv=enopv.old,K=Kvalue.old)
+#enop.old=lazyopen("All_pops_sim_10002.csv") # data file from Stegen et al 2015
+#enopv.old=enop.old[,2]
+#names(enopv.old)=paste0("OTU",rownames(enop.old))
+#hist(enop.old[,2],breaks=100)
+#(Kvalue.old=phytools::phylosig(tree, x=enopv.old, method="K", test=FALSE, nsim=1000))
+#opens$JS=list(openv=enopv.old,K=Kvalue.old)
 
 # 1.2.2 # method 2: Brownian, medium phylogenetic signal across tree
 source(paste0(code.wd,"/BM.ACDC.r"))
@@ -76,6 +87,6 @@ hist(enop[,1],breaks = 100)
 (Kvalue=phytools::phylosig(tree, x=enopv, method="K", test=FALSE, nsim=1000))
 opens$ACDC=list(openv=enopv,K=Kvalue)
 
-save(opens,file=paste0(output_wd,"/JS.opens.rda"))
+save(opens,file=paste0(wd,"/YXIN.lowN.opens.rda"))
 
 # End #

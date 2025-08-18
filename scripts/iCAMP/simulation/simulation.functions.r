@@ -76,10 +76,11 @@ sim_select<-function(op,Nk,sampname,code.wd,
   # 2.1 # totally deterministic, no variation among samples
   fit.L=exp(-((op-FL)^2)/(2*sig2.L))
   fit.H=exp(-((op-FH)^2)/(2*sig2.H))
-  com.fit=rbind(matrix(fit.L,nr=5,nc=length(op),byrow = TRUE),
-                matrix(fit.H,nr=5,nc=length(op),byrow = TRUE))
+  com.fit=rbind(matrix(fit.L,nr=10,nc=length(op),byrow = TRUE),
+                matrix(fit.H,nr=10,nc=length(op),byrow = TRUE))
   source(paste0(code.wd,"/int.round.r"))
   comm=t(sapply(1:nrow(com.fit),function(i){int.round(com.fit[i,],sum.exp = Nk)}))
+  dim(comm)
   rownames(comm)=sampname
   colnames(comm)=names(op)
   comm=comm[,colSums(comm)>0]
@@ -275,10 +276,12 @@ dispersal.ZSM.sloan<-function(op,Nk,sampname,spnumi=100,meta.ab,
   rownames(comm)=sampname;colnames(comm)=names(op)
   dim(comm)
   
-  comm["Almere1",]=pool.A
-  comm["Bath1",]=pool.B
-  comm[grep("Almere[2-5]",rownames(comm)),]=disp.sloan(n=4,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2.A,spnumi = spnumi,fix.rich=fix.rich)
-  comm[grep("Bath[2-5]",rownames(comm)),]=disp.sloan(n=4,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2.B,spnumi = spnumi,fix.rich=fix.rich)
+  comm["Almere_butyrate1",]=pool.A
+  comm["Bath_butyrate1",]=pool.B
+  comm[grep("Almere_butyrate[2-5]",rownames(comm)),]=disp.sloan(n=4,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2.A,spnumi = spnumi,fix.rich=fix.rich)
+  comm[grep("Bath_butyrate1[2-5]",rownames(comm)),]=disp.sloan(n=4,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2.B,spnumi = spnumi,fix.rich=fix.rich)
+  comm[grep("Almere_acetate",rownames(comm)),]=disp.sloan(n=5,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2.A,spnumi = spnumi,fix.rich=fix.rich)
+  comm[grep("Bath_acetate",rownames(comm)),]=disp.sloan(n=5,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2.B,spnumi = spnumi,fix.rich=fix.rich)
   rowSums(comm)
   dim(comm)
   comm=comm[,colSums(comm)>0]
@@ -412,8 +415,8 @@ drift.ZSM.sloan<-function(op,Nk,sampname,spnumi=100,meta.ab,
   rownames(comm)=sampname;colnames(comm)=names(op)
   dim(comm)
   
-  comm[grep("Almere",rownames(comm)),]=disp.sloan(n=5,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2,spnumi = spnumi)
-  comm[grep("Bath",rownames(comm)),]=disp.sloan(n=5,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2,spnumi = spnumi)
+  comm[grep("butyrate",rownames(comm)),]=disp.sloan(n=10,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2,spnumi = spnumi)
+  comm[grep("acetate",rownames(comm)),]=disp.sloan(n=10,Nk=Nk,m1=m1,m2=m2,pi1 = pi1,pi2 = pi2,spnumi = spnumi)
   rowSums(comm)
   dim(comm)
   comm=comm[,colSums(comm)>0]

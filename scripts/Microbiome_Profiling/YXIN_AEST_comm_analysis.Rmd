@@ -1,0 +1,1837 @@
+---
+title: "YXIN_proj1_Q16712_microbial_community_analysis"
+author: "ENAT/Enden_Dea_Nataya"
+date: "2025-04-29"
+output: html_document
+---
+
+# Microbial community analysis for YXIN and AEST dataset
+## Settings
+```{r , eval=TRUE, echo=T, include=T, message=FALSE, warning=FALSE}
+
+library(here)
+
+# set optional parameters
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE, 
+                      message = FALSE,
+                      root.dir = here())
+options(scipen = 999, digits = 3)
+
+```
+
+```{r loading libraries, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+## load required packages
+library(Hmisc)
+library(phyloseq)
+library(qiime2R)
+library(tidyverse)
+library(magrittr)
+library(devtools)
+library(qiime2R)
+library(here)
+library(breakaway)
+library(DivNet)
+library(ape)
+library(vegan)
+library(ggtext)
+library(cowplot)
+library(RColorBrewer)
+library(microbiome)
+library(lme4)
+library(lmerTest)
+library(decontam)
+#library(ampvis2)
+library(glue)
+library(lubridate)
+library(DECIPHER)
+library(ensembleTax)
+#library(mEQO)
+library(ggh4x)
+library(RColorBrewer)
+library(dplyr)
+
+```
+
+``` {r project organization, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# create directories
+if (!dir.exists(here("results", "figures"))) dir.create(here("results", "figures"), recursive = TRUE)
+if (!dir.exists(here("results", "output_data"))) dir.create(here("results", "output_data"), recursive = TRUE)
+
+# set color vector for later use
+colorset <- c("darkblue", "darkgoldenrod1", "darkseagreen", "darkorchid", "darkolivegreen1", "lightskyblue", "darkgreen",  "khaki2", "firebrick", "brown1", "darkorange1", "cyan1", "royalblue4", "darksalmon", "darkblue", "royalblue4", "dodgerblue3", "steelblue1")
+
+```
+
+## YXIN dataset preparation
+### import data
+``` {r import data, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Project name
+proj = "YXIN"
+
+# import QIIME output and save as phyloseq object
+physeq <- qza_to_phyloseq(
+  features = here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN_table.qza"),
+  tree = here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN_rooted-tree.qza"),
+  taxonomy = here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN_silva-138-99-nb-classifier.qza"),
+  metadata =here("data", "processed", "YXIN_QIIME_output", "XYIN_16S_515F_926R_07092023_Q16712_XYIN@metadata_formatted.txt" ))
+
+# save phyloseq object as .rds
+write_rds(physeq, here("results", "output_data", glue("{proj}_physeq.rds")))
+
+# check for samples in the dataset
+sample_data(physeq)
+
+```
+
+### Resolve inconsistent taxonomy (see: tax_clean_updated.R)
+``` {r clean taxonomy, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+source(here("scripts", "Microbiome_Profiling", "tax_clean_updated.R"))
+
+# clean up taxonomy table using predefined function
+physeq_clean <- tax_clean(physeq, here("results", "output_data"), proj)
+
+# save the cleaned phyloseq object as rds
+write_rds(physeq_clean, here("results", "output_data", glue("{proj}_physeq_clean.rds")))
+
+```
+
+### Relative Proportion of bacterial and non-bacterial sequence
+
+``` {r visualize non-bacterial seq, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# physeq_clean as input for this code chunk
+psdata <- physeq_clean
+
+# Subset the data for non-bacterial seqs
+psdata_nonBac <- 
+  psdata %>%
+  tax_glom(., "Phylum") %>% # merge taxa until Phylum level
+  transform_sample_counts(., fun = function(x) x/sum(x)) %>% # normalized seq abundance
+  psmelt() %>%
+  as_tibble() %>%
+  filter(., Kingdom != "Bacteria") %>% # filter to retain only sequence from non-bacteria
+  select(Sample, Abundance, Kingdom, Phylum) %>% # select to only retain data from these columns
+  group_by(Sample, Phylum) %>% # group the data by phylum
+  summarise(rel_abund = sum(Abundance))
+
+# visualize the non-Bac seqs
+psdata_nonBac %>%
+  ggplot(aes(x = Sample, y = rel_abund, fill = Phylum)) +
+           geom_col() +
+           scale_fill_manual(name=NULL, 
+                    values = colorset) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 45, hjust = 1),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom")
+
+
+# Quick-view on the mitochondrial and chloroplast seqs
+psdata_mito_chlorop <-
+  psdata %>%
+  tax_glom(., "Family") %>%
+  transform_sample_counts(., fun = function(x) x/sum(x)) %>% # normalized seq abundance
+  psmelt() %>%
+  as_tibble() %>%
+  filter(., Kingdom == "Bacteria") %>% # filter to retain only sequence from bacteria
+  filter(grepl("Mitochondria|Chloroplast", Family)) %>%
+  group_by(Sample, Family) %>% 
+  summarise(rel_abund = sum(Abundance))
+
+# Visualize the mito_chlorop seqs
+psdata_mito_chlorop %>% 
+  ggplot(aes(x = Sample, y = rel_abund, fill = Family)) +
+           geom_col() +
+           scale_fill_manual(name=NULL, 
+                    values = colorset) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 45, hjust = 1),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom")
+
+# There are still non-Bac seqs present, while no mitochondria & chloroplast seqs were not found
+  
+```
+
+### Filter out non-Bac seqs
+
+``` {r clean on taxonomy, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Filter out non-Bac seqs; no filtering is needed for mito_chlorop anymore. 
+psdata_tax_filtered <-
+  psdata %>%
+  subset_taxa(., grepl("Bacteria", Kingdom))
+  
+# calculate the difference in ntaxa before and after filtering
+old <- ntaxa(psdata)
+new <- ntaxa(psdata_tax_filtered)
+old - new
+
+# check removed Mitochondrial ASV counts per sample
+if(any(tax_table(psdata)[, "Family"] == "Mitochondria", na.rm = TRUE)) {
+  mito_abundances <- psdata %>%
+    subset_taxa(Family == "Mitochondria") %>%
+    psmelt() %>%
+    select(OTU, Sample, Family, Abundance) %>% 
+    mutate_if(is.character, as.factor) %>% 
+    group_by(Sample) %>% 
+    summarise(Abundance = sum(Abundance)) %>% 
+    arrange(desc(Abundance), .by_group = T)
+  
+  print(mito_abundances)
+  
+} else {
+  print("No mitochondrial taxa found in the dataset.")
+}
+
+# save unfiltered psdata
+psdata_unfiltered = psdata 
+saveRDS(object = psdata_unfiltered, file = here("results", "output_data", glue("{proj}_psdata_unfiltered.rds"))) # save unfiltered data
+
+
+```
+
+
+### Resolving non-dichotomy in the phylogeny tree
+```{r clean phylogeny, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Resolve phylogeny tree if it has node more than 2 tips
+if(is.binary(phy_tree(psdata_tax_filtered)) == FALSE){
+  print("resolving phylogenetic tree")
+  phy_tree_resolved <- multi2di(phy_tree(psdata))
+  is.binary(phy_tree_resolved)
+  # merge new phy_tree object with sample_data and otu_table into new phyloseq object
+  psdata_resolved <- merge_phyloseq(otu_table(psdata_tax_filtered), tax_table(psdata_tax_filtered),
+                 sample_data(psdata_tax_filtered), phy_tree_resolved)
+}
+
+# save filted phyloseq object with resolved tree
+saveRDS(object = psdata_resolved, file = here("results", "output_data", glue("{proj}_psdata_filtered_tree-resolved.rds")))
+
+```
+
+### rarefaction curve
+``` {r rarefaction curve, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# alpha rarefaction curve
+source(here("scripts", "Microbiome_Profiling", "ampvis2_internals.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rankabundance.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rarecurve.r"))
+
+# perform rarefaction using predefined function
+#show the plot
+amp_rarecurve(psdata_resolved, color = "exp_id", label = F, legend.position = "bottomright", legend = F)
+
+# save plot
+pdf(here::here("results", "figures", glue("{proj}_rarefaction_curves.pdf")), useDingbats = F, width = 7, height = 5)
+amp_rarecurve(psdata_resolved, color = "exp_id", label = F, legend.position = "bottomright", legend = F)
+dev.off()
+
+
+```
+
+### remove mock and blank
+```{r view mock and blank, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# extract DNA extraction blank
+psdata_blank <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, exp_id  == "blank_nc")) > 0,
+    subset_samples(psdata_resolved, exp_id  == "blank_nc")
+    )
+
+# extract mock community
+psdata_mock <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, exp_id  == "mock")) > 0,
+    subset_samples(psdata_resolved, exp_id  == "mock")
+    )
+
+saveRDS(object = psdata_mock, file =here("results", "output_data", glue("{proj}_mock.rds")))
+
+# remove blank and mock
+psdata_samples <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, !grepl("mock|blank_nc", exp_id))) > 0,
+    subset_samples(psdata_resolved, !grepl("mock|blank_nc", exp_id))
+  )
+
+```
+
+### Filter on abundance to retain ASVs at certain threshold
+```{r filter on abundance, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Transform seqs count into relative abundance
+psdata_rel <- transform_sample_counts(psdata_samples, fun = function(x) x/sum(x))
+
+# total sequence sum
+total_sum = sum(sample_sums(psdata_samples))
+print(total_sum)
+
+# continue downstream analysis with abundance filter that retains ASVs with at least 0.1% of total read abundance -> keeps above 99% abundance when removing rare data
+# This to choose the threshold of minimum rel abundance of seqs 
+psdata_0.01pct <- prune_taxa(taxa_sums(psdata_rel) > 0.0001, psdata_samples)
+psdata_0.05pct <- prune_taxa(taxa_sums(psdata_rel) > 0.0005, psdata_samples)
+psdata_0.1pct <- prune_taxa(taxa_sums(psdata_rel) > 0.001, psdata_samples)
+psdata_1pct <- prune_taxa(taxa_sums(psdata_rel) > 0.01, psdata_samples)
+
+# Calculate how many reads remained after applying each threshold
+sum(sample_sums(psdata_0.01pct)/total_sum*100) #99.7%
+sum(sample_sums(psdata_0.05pct)/total_sum*100) #98.6%
+sum(sample_sums(psdata_0.1pct)/total_sum*100) #97.4 %
+sum(sample_sums(psdata_1pct)/total_sum*100) #84.9%
+
+# We select psdata_0.05pct as it retains 98.6% reads in the dataset
+
+```
+### prepare data for picrust2
+``` {r prepare data for picrust2, eval=F}
+
+# convert feature table into df --> tibble
+biom_test <-
+  psdata_0.05pct %>%
+  otu_table() %>%
+  data.frame(rownames = 1) %>%
+  as_tibble()
+
+# save as biomformat
+biomformat::write_biom(biom_test, here("results", "output_data", glue("{proj}_otu_table_psdata_0.05pct.biom")))
+
+```
+
+### Subset Low N sub-experiment from YXIN dataset
+
+``` {r prepare Low_N samples, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# select only samples from lowN condition
+psdata_lowN <-
+    prune_taxa(
+      taxa_sums(
+        subset_samples(psdata_0.05pct, condition == "Low_N"))>0, 
+        subset_samples(psdata_0.05pct, condition == "Low_N"))
+
+
+# create relative abundance phyloseq objects
+psdata_lowN_rel <-
+  transform_sample_counts(psdata_lowN, function(x) x/sum(x))
+
+# melt the phyloseq object into a df-like structure
+ps_lowN <- psmelt(psdata_lowN)
+
+# Save the data for iCAMP analysis
+#if (!dir.exists(here("data", "processed", "for_iCAMP"))) dir.create(here("data", "processed", "for_iCAMP"), recursive = TRUE)
+#saveRDS(psdata_lowN, file = here("data", "processed", "for_iCAMP", "YXIN_psdata_lowN.rds"))
+saveRDS(psdata_lowN, file = here("results", "output_data", "YXIN_psdata_lowN.rds"))
+write.tree(phy_tree(psdata_lowN), file = here("results", "output_data", "YXIN_psdata.nwk"))
+
+```
+
+## AEST dataset preparation
+
+### import data
+``` {r import data, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# project name
+proj = "AEST"
+
+# import QIIME output and save as phyloseq object
+AEST_physeq <- qza_to_phyloseq(
+  features = here("data", "processed", "AEST_QIIME_output", "AEST_table.qza"),
+  tree = here("data", "processed", "AEST_QIIME_output", "AEST_rooted-tree.qza"),
+  taxonomy = here("data", "processed", "AEST_QIIME_output", "AEST_taxonomy.qza"),
+  metadata =here("data", "processed", "AEST_QIIME_output", "AEST_Q10390_16S_515F926R_20210902@metadata_vAEST_20210903_formatted.txt" ))
+
+# save phyloseq object as .rds
+write_rds(AEST_physeq, here("results", "output_data", glue("{proj}_physeq.rds")))
+
+# check for samples in the dataset
+sample_data(AEST_physeq)
+
+```
+
+### Resolve inconsistent taxonomy (see: tax_clean_updated.R)
+``` {r clean taxonomy, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+source(here("scripts", "Microbiome_Profiling", "tax_clean_updated.R"))
+
+# clean up taxonomy table using predefined function
+AEST_physeq_clean <- tax_clean(AEST_physeq, here("results", "output_data"), proj)
+
+# save the cleaned phyloseq object as rds
+write_rds(AEST_physeq_clean, here("results", "output_data", glue("{proj}_physeq_clean.rds")))
+
+```
+
+### Relative Proportion of bacterial and non-bacterial sequence
+``` {r visualize non-bacterial seq, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# physeq_clean as input for this code chunk
+psdata <- AEST_physeq_clean
+
+# Subset the data for non-bacterial seqs
+psdata_nonBac <- 
+  psdata %>%
+  tax_glom(., "Phylum") %>% # merge taxa until Phylum level
+  transform_sample_counts(., fun = function(x) x/sum(x)) %>% # normalized seq abundance
+  psmelt() %>%
+  as_tibble() %>%
+  filter(., Kingdom != "Bacteria") %>% # filter to retain only sequence from non-bacteria
+  select(Sample, Abundance, Kingdom, Phylum) %>% # select to only retain data from these columns
+  group_by(Sample, Phylum) %>% # group the data by phylum
+  summarise(rel_abund = sum(Abundance))
+
+# visualize the non-Bac seqs
+psdata_nonBac %>%
+  ggplot(aes(x = Sample, y = rel_abund, fill = Phylum)) +
+           geom_col() +
+           scale_fill_manual(name=NULL, 
+                    values = colorset) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 45, hjust = 1),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom")
+
+
+# Quick-view on the mitochondrial and chloroplast seqs
+psdata_mito_chlorop <-
+  psdata %>%
+  tax_glom(., "Family") %>%
+  transform_sample_counts(., fun = function(x) x/sum(x)) %>% # normalized seq abundance
+  psmelt() %>%
+  as_tibble() %>%
+  filter(., Kingdom == "Bacteria") %>% # filter to retain only sequence from bacteria
+  filter(grepl("Mitochondria|Chloroplast", Family)) %>%
+  group_by(Sample, Family) %>% 
+  summarise(rel_abund = sum(Abundance))
+
+# Visualize the mito_chlorop seqs
+psdata_mito_chlorop %>% 
+  ggplot(aes(x = Sample, y = rel_abund, fill = Family)) +
+           geom_col() +
+           scale_fill_manual(name=NULL, 
+                    values = colorset) + # with named color vector ordered by median Genus abundance
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x=NULL, y="Relative Abundance (%)") +
+  theme_classic() +
+  theme(axis.text.x = element_markdown(angle = 45, hjust = 1),
+        legend.text = element_markdown(),
+        legend.key.size = unit(7, "pt"),
+        legend.position = "bottom")
+
+# There are still non-Bac seqs present, while no mitochondria & chloroplast seqs were not found
+  
+```
+
+### Filter out non-Bac seqs
+``` {r clean on taxonomy, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Input for this code chunk: psdata
+
+# Filter out non-Bac seqs; no filtering is needed for mito_chlorop anymore. 
+psdata_tax_filtered <-
+  psdata %>%
+  subset_taxa(., grepl("Bacteria", Kingdom))
+  
+# calculate the difference in ntaxa before and after filtering
+old <- ntaxa(psdata)
+new <- ntaxa(psdata_tax_filtered)
+old - new
+
+# check removed Mitochondrial ASV counts per sample
+if(any(tax_table(psdata)[, "Family"] == "Mitochondria", na.rm = TRUE)) {
+  mito_abundances <- psdata %>%
+    subset_taxa(Family == "Mitochondria") %>%
+    psmelt() %>%
+    select(OTU, Sample, Family, Abundance) %>% 
+    mutate_if(is.character, as.factor) %>% 
+    group_by(Sample) %>% 
+    summarise(Abundance = sum(Abundance)) %>% 
+    arrange(desc(Abundance), .by_group = T)
+  
+  print(mito_abundances)
+  
+} else {
+  print("No mitochondrial taxa found in the dataset.")
+}
+
+# save unfiltered psdata
+psdata_unfiltered = psdata 
+saveRDS(object = psdata_unfiltered, file = here("results", "output_data", glue("{proj}_psdata_unfiltered.rds"))) # save unfiltered data
+
+
+```
+### Resolving non-dichotomy in the phylogeny tree
+```{r clean phylogeny, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Resolve phylogeny tree if it has node more than 2 tips
+if(is.binary(phy_tree(psdata_tax_filtered)) == FALSE){
+  print("resolving phylogenetic tree")
+  phy_tree_resolved <- multi2di(phy_tree(psdata))
+  is.binary(phy_tree_resolved)
+  # merge new phy_tree object with sample_data and otu_table into new phyloseq object
+  psdata_resolved <- merge_phyloseq(otu_table(psdata_tax_filtered), tax_table(psdata_tax_filtered),
+                 sample_data(psdata_tax_filtered), phy_tree_resolved)
+}
+
+# save filted phyloseq object with resolved tree
+saveRDS(object = psdata_resolved, file = here("results", "output_data", glue("{proj}_psdata_filtered_tree-resolved.rds")))
+
+```
+### Rarerfaction curve
+``` {r rarefaction curve, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# alpha rarefaction curve
+source(here("scripts", "Microbiome_Profiling", "ampvis2_internals.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rankabundance.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rarecurve.r"))
+
+# perform rarefaction using predefined function
+#show the plot
+amp_rarecurve(psdata_resolved, color = "condition", label = F, legend.position = "bottomright", legend = F)
+
+# save plot
+pdf(here::here("results", "figures", glue("{proj}_rarefaction_curves.pdf")), useDingbats = F, width = 7, height = 5)
+amp_rarecurve(psdata_resolved, color = "condition", label = F, legend.position = "bottomright", legend = F)
+dev.off()
+
+
+```
+### remove mock and blank
+```{r view mock and blank, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# extract DNA extraction blank
+psdata_blank <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, is.na(condition))) > 0,
+    subset_samples(psdata_resolved, is.na(condition))
+    )
+
+# remove blank and mock
+psdata_samples <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_resolved, !grepl("Blank", Description))) > 0,
+    subset_samples(psdata_resolved, !grepl("Blank", Description))
+  )
+
+# extract mock community
+#psdata_mock <-
+  #prune_taxa(taxa_sums(
+   # subset_samples(psdata_resolved, exp_id  == "mock")) > 0,
+   # subset_samples(psdata_resolved, exp_id  == "mock")
+   # )
+
+#saveRDS(object = psdata_mock, file =here("results", "output_data", "AEST_proj21_Q16712_PHA_butyrate_feed_mock.rds"))
+
+```
+
+### Filter on abundance to retain ASVs at certain threshold
+```{r filter on abundance, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# Transform seqs count into relative abundance
+psdata_rel <- transform_sample_counts(psdata_samples, fun = function(x) x/sum(x))
+
+# total sequence sum
+total_sum = sum(sample_sums(psdata_samples))
+print(total_sum)
+
+# continue downstream analysis with abundance filter that retains ASVs with at least 0.1% of total read abundance -> keeps above 99% abundance when removing rare data
+# This to choose the threshold of minimum rel abundance of seqs 
+psdata_0.01pct <- prune_taxa(taxa_sums(psdata_rel) > 0.0001, psdata_samples)
+psdata_0.05pct <- prune_taxa(taxa_sums(psdata_rel) > 0.0005, psdata_samples)
+psdata_0.1pct <- prune_taxa(taxa_sums(psdata_rel) > 0.001, psdata_samples)
+psdata_1pct <- prune_taxa(taxa_sums(psdata_rel) > 0.01, psdata_samples)
+
+# Calculate how many reads remained after applying each threshold
+sum(sample_sums(psdata_0.01pct)/total_sum*100) #99.9%
+sum(sample_sums(psdata_0.05pct)/total_sum*100) #99.4%
+sum(sample_sums(psdata_0.1pct)/total_sum*100) #98.8 %
+sum(sample_sums(psdata_1pct)/total_sum*100) #91.7%
+
+# We select psdata_0.1pct as it retains 98.8% reads in the dataset
+
+```
+### prepare data for picrust2
+``` {r prepare data for picrust2, eval=F}
+
+# convert feature table into df --> tibble
+biom_test <-
+  psdata_0.1pct %>%
+  otu_table() %>%
+  data.frame(rownames = 1) %>%
+  as_tibble()
+
+# save as biomformat
+biomformat::write_biom(biom_test, here("results", "output_data", glue("{proj}_otu_table_psdata_0.1pct.biom")))
+
+```
+
+### Subset AEST dataset
+``` {r prepare Low_N samples, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# select only samples at t=0, 24, 48 (similar to YXIN dataset)
+psdata_calpos <-
+    prune_taxa(
+      taxa_sums(
+        subset_samples(psdata_0.1pct, time != "120h"))>0, 
+        subset_samples(psdata_0.1pct, time != "120h"))
+
+
+# create relative abundance phyloseq objects
+psdata_cal_rel <-
+  transform_sample_counts(psdata_calpos, function(x) x/sum(x))
+
+# melt the phyloseq object into a df-like structure
+ps_cal <- psmelt(psdata_calpos)
+
+# Save the data for iCAMP analysis
+#if (!dir.exists(here("data", "processed", "for_iCAMP"))) dir.create(here("data", "processed", "for_iCAMP"), recursive = TRUE)
+#saveRDS(psdata_calpos, file = here("data", "processed", "for_iCAMP", glue("{proj}_psdata.rds")))
+saveRDS(psdata_calpos, file = here("results", "output_data", glue("{proj}_psdata.rds")))
+
+```
+
+## Merged data: YXIN and AEST (corrected by copy-number)
+
+### Import data
+```{r combine physeq object}
+
+proj="YXIN_AEST"
+
+#import YXIN dataset
+psdata_YXIN <- readRDS(here("data", "processed" , "YXIN_QIIME_output", "YXIN_psdata_corrected.rds"))
+psdata_YXIN_notree <- phyloseq(
+  otu_table(psdata_YXIN),
+  tax_table(psdata_YXIN),
+  sample_data(psdata_YXIN)
+)
+
+# import AEST dataset
+psdata_AEST <- readRDS(here("data", "processed" , "AEST_QIIME_output", "AEST_psdata_corrected.rds"))
+psdata_AEST_notree <- phyloseq(
+  otu_table(psdata_AEST),
+  tax_table(psdata_AEST),
+  sample_data(psdata_AEST)
+)
+
+# Merge YXIN and AEST psdata
+# As we will merge both physeq objects, we need a combined tree (previously combined in QIIME, see: q2_merge_tree.sh)
+combined_tree <- qza_to_phyloseq(tree = here("data", "processed", "AEST_QIIME_output", "YXIN_AEST_merged-rooted-tree.qza"))
+merged_ps <- merge_phyloseq(psdata_YXIN_notree, psdata_AEST_notree)
+
+phy_tree(merged_ps) <- combined_tree
+
+# Resolve phylogeny tree if it has node more than 2 tips
+if(is.binary(phy_tree(merged_ps)) == FALSE){
+  print("resolving phylogenetic tree")
+  phy_tree_resolved <- multi2di(phy_tree(merged_ps))
+  is.binary(phy_tree_resolved)
+  # merge new phy_tree object with sample_data and otu_table into new phyloseq object
+  psdata_resolved <- merge_phyloseq(otu_table(merged_ps), tax_table(merged_ps),
+                 sample_data(merged_ps), phy_tree_resolved)
+}
+
+# Adjust metadata with assumption Acetate + ca == butyrate
+metadata <- as(sample_data(merged_ps), "data.frame") %>%
+  mutate(treat_group = case_when(
+    condition == "CALCIUM" ~ "butyrate",
+    condition == "POTASSIUM" ~ "acetate",
+    TRUE ~ substrate),
+    exp = substr(rownames(.), 1, 4),
+    subs_cond = case_when(
+      exp == "YXIN" ~ substrate,
+      exp == "AEST" & condition == "POTASSIUM" ~ "acetate",
+      TRUE ~ paste0("acetate + ", tolower(condition))
+    ),
+    exp = factor(exp, levels = c("YXIN", "AEST")),
+    subs_cond = factor(subs_cond, levels = c("butyrate", "acetate", "acetate + calcium", "acetate + potassium")),
+    sludge_source = factor(sludge_source, levels = c("Bath", "Almere", "Leeuwarden", "Beverwijk", "Winsum")))
+
+# some of the Leeuwarden data were recognized as NA (eventhough the sludge_source == Leeuwarden)
+metadata$sludge_source[is.na(metadata$sludge_source)] <- "Leeuwarden"
+
+# merge adjusted metadata to physeq object
+sample_data(psdata_resolved) <- metadata
+
+# Check for duplicated Genus
+# I found this problem after agglomerate at Genus level; problem is due to inconsistent taxonomic data (e.g.,the same Genus and other tax levels, but different Order due to updated microbial classification)
+# Probably different classifier used for YXIN (previously done by Pieter) and AEST (done by Dea; silva-138-99-nb-classifier.qza)
+tax_df <- as.data.frame(tax_table(psdata_resolved))
+tax_df$ASV <- rownames(tax_df)
+
+dup_genera <- tax_df %>%
+  filter(!is.na(Genus)) %>%
+  group_by(Genus) %>%
+  filter(n_distinct(Family, Order, Class, Phylum) > 1)
+
+# Resolving dulplicated Genus due to inconsistent taxonomic data between AEST and YXIN datasets (there are 13 pairs)
+# cross check based on NCBI taxonomy browser
+tax_df <- tax_df %>%
+  mutate(
+    # Pseudarcobacter
+    Phylum = ifelse(Genus == "Pseudarcobacter", "Campylobacterota", Phylum),
+    # SJA-28
+    Class = ifelse(Genus == "SJA-28", "Ignavibacteria", Class),
+    # Halomonas
+    Order = ifelse(Genus == "Halomonas", "Oceanospirillales", Order),
+    # Genus of Cellvibrionaceae
+    Order = ifelse(Genus == "Genus of Cellvibrionaceae", "Cellvibrionales", Order), 
+    # Cellvibrio
+    Order = ifelse(Genus == "Cellvibrio", "Cellvibrionales", Order), 
+    # C1-B045
+    Order = ifelse(Genus == "C1-B045", "Cellvibrionales", Order), 
+    # Pseudohongiella
+    Order = ifelse(Genus == "Pseudohongiella", "Pseudomonadales", Order),
+    # Halioglobus
+    Order = ifelse(Genus == "Halioglobus", "Cellvibrionales", Order),
+    # OM60(NOR5)_clade
+    Order = ifelse(Genus == "OM60(NOR5)_clade", "Cellvibrionales", Order),
+    # BD1-7_clade
+    Order = ifelse(Genus == "BD1-7_clade", "Cellvibrionales", Order),
+    # Alishewanella
+    Order = ifelse(Genus == "Alishewanella", "Alteromonadales", Order),
+    # Rheinheimera
+    Order = ifelse(Genus == "Rheinheimera", "Enterobacterales", Order),
+    # Aeromonas
+    Order = ifelse(Genus == "Aeromonas", "Alteromonadales", Order),
+  )
+
+# Replace taxonomy table in phyloseq object
+tax_mat <- as.matrix(tax_df[ , -which(names(tax_df) == "ASV")])
+rownames(tax_mat) <- tax_df$ASV
+tax_table(psdata_resolved) <- tax_table(tax_mat)
+
+#save merged psdata
+write_rds(psdata_resolved, here("results", "output_data", "YXIN_AEST_physeq.rds"))
+
+# sequence depth
+summary(sample_sums(psdata_resolved))
+
+```
+
+### rarefaction curve
+``` {r rarefaction curve, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# alpha rarefaction curve
+source(here("scripts", "Microbiome_Profiling", "ampvis2_internals.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rankabundance.r"))
+source(here("scripts", "Microbiome_Profiling", "amp_rarecurve.r"))
+
+# perform rarefaction using predefined function
+#show the plot
+amp_rarecurve(psdata_resolved, color = "exp", label = F, legend.position = "bottomright", legend = T)
+
+# save plot
+pdf(here::here("results", "figures", glue("{proj}_rarefaction_curves.pdf")), useDingbats = F, width = 7, height = 5)
+amp_rarecurve(psdata_resolved, color = "exp", label = F, legend.position = "bottomright", legend = T)
+dev.off()
+
+
+```
+
+### Alpha diversity analysis 
+``` {r alpha diversity, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+
+# There are 501 genus; unrarefied data
+psdata_genus <- psdata_resolved %>%
+  tax_glom(., "Genus")
+
+# save the tree for iToL
+write.tree(phy_tree(psdata_genus), file = here("results", "output_data", "iCAMP_YXIN_AEST", "YXIN_AEST_501genera_tree.nwk"))
+
+# calculate alpha diversity: richness & Shannon on genus level
+alpha <- estimate_richness(psdata_genus, measures = c("observed", "Shannon", "Chao1", "Simpson"))
+alpha$Sample <- row.names(alpha) # add additional "Sample" colomn to help for diversity x metadata merging
+
+# preparing metadata for the samples
+metadata2 <-
+  sample_data(psdata_genus) %>%
+  data.frame() %>%
+  as_tibble() %>%
+  mutate(Sample = sample_names(psdata_genus)) %>%
+  select(Sample, everything())
+
+# merge diversity matrix with metadata
+alpha2 <- inner_join(metadata2, alpha, by = "Sample") %>%
+  mutate(exp = factor(exp, levels = c("YXIN", "AEST")),
+         subs_cond = factor(subs_cond, levels = c("butyrate", "acetate", "acetate + calcium")),
+         sludge_source = factor(sludge_source, levels = c("Bath", "Almere", "Leeuwarden", "Beverwijk", "Winsum"))) 
+
+alpha2$sludge_source[is.na(alpha2$sludge_source)] <- "Leeuwarden"
+
+
+## Visualize Chao1 and Shannon index
+Chao1_b <-
+  alpha2 %>%
+  group_by(time, sludge_source, subs_cond, exp) %>%
+  summarise(Chao1 = mean(Chao1, na.rm = TRUE), .groups = "drop") %>%
+  ggplot(aes(x= time, y=Chao1, color= exp)) +
+  geom_point(aes(shape = subs_cond),
+                 size = 2, show.legend = T) +
+  geom_line(aes(group = interaction(exp, subs_cond),
+                color = exp)) +
+  scale_color_manual(values = c("red", "blue")) +
+  scale_fill_manual(values = c("red", "blue")) +
+  scale_y_continuous(limits = c(80,NA)) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(legend.key.size = unit(7, "pt"),
+        strip.background = element_rect(fill="white", colour = "white"),
+        axis.title.y = element_text(hjust = 0.5),
+        strip.placement = "outside",
+        legend.position = "right",
+        panel.border = element_rect(colour = "black", fill = NA)) +
+    labs(
+    y = expression("Chao1 index (genus level)"),
+    x = NULL,
+    color = "Experiment",  # Legend label
+    shape = "Substrate") +
+  theme(axis.text.x = element_text(hjust = 0.5)) +
+  theme(strip.text = element_text(face = "bold", size = 10, hjust = 0)) +
+  facet_nested(~ sludge_source, scales = "free", space = "free_x") 
+
+#Shannon
+Shannon_b <-
+  alpha2 %>%
+  group_by(time, sludge_source, subs_cond, exp) %>%
+  summarise(Shannon = mean(Shannon, na.rm = TRUE), .groups = "drop") %>%
+  ggplot(aes(x= time, y=Shannon, color= exp)) +
+  geom_point(aes(shape = subs_cond),
+                 size = 2, show.legend = T) +
+  geom_line(aes(group = interaction(exp, subs_cond),
+                color = exp)) +
+  scale_color_manual(values = c("red", "blue")) +
+  scale_fill_manual(values = c("red", "blue")) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(legend.key.size = unit(7, "pt"),
+        strip.background = element_rect(fill="white", colour = "white"),
+        axis.title.y = element_text(hjust = 0.5),
+        strip.placement = "outside",
+        legend.position = "right",
+        panel.border = element_rect(colour = "black", fill = NA)) +
+    labs(
+    y = expression("Shannon diversity index (genus level)"),
+    x = NULL,
+    color = "Experiment",  # Legend label
+    shape = "Substrate") +
+  theme(axis.text.x = element_text(hjust = 0.5)) +
+  theme(strip.text = element_text(face = "bold", size = 10, hjust = 0)) +
+  facet_nested(~ sludge_source, scales = "free", space = "free_x") 
+
+# save figure
+ggsave(Chao1_b, filename = here("results", "figures", glue("{proj}_plot_alpha_div_Chao1.pdf")), width = 7, height = 5)
+ggsave(Shannon_b, filename = here("results", "figures", glue("{proj}_plot_alpha_div_Shannon.pdf")), width = 7, height = 5)
+
+```
+
+### Barplots of genus level taxonomy
+```{r plot_bar all genera, message=F, echo=T, eval=T, warning=T, include=T, cache=F}
+
+# melt the phyloseq object into a df-like structure
+ps_genus <- psmelt(psdata_genus)
+
+# count n genera n = 501
+ps_genus %>% 
+  as_tibble() %>% 
+  mutate(Genus = factor(Genus)) %>% 
+  pull(Genus) %>% 
+  levels() %>% 
+  length()
+
+# Define a function to find the first non-matching column
+
+# Use rowwise and mutate to apply the function
+ps_Genus_taxlabel = ps_genus %>% 
+  as_tibble() %>% 
+  mutate(across(everything(),  ~str_replace_all(., ",", "."))) %>% 
+  mutate(across(where(~ all(grepl("^-?\\d*\\.?\\d*$", .))), as.numeric)) %>% 
+  select(OTU, Sample, Abundance, sludge_source:Genus, replicate) %>%
+  rowwise() %>%
+  mutate(tax_label = case_when(
+    grepl("\\d", Genus) ~ {
+      first_non_numeric <- case_when(
+        !grepl("\\d", Family) ~ paste(Family, Genus, sep = " "),
+        !grepl("\\d", Order) ~ paste(Order, Genus, sep = " "),
+        !grepl("\\d", Class) ~ paste(Class, Genus, sep = " "),
+        !grepl("\\d", Phylum) ~ paste(Phylum, Genus, sep = " "),
+        !grepl("\\d", Kingdom) ~ paste(Kingdom, Genus, sep = " "),
+        TRUE ~ NA_character_
+      )
+      first_non_numeric
+    },
+    TRUE ~ Genus
+  ))
+
+
+# Calculate genus abundances per group of samples
+group_genus_abundances <- ps_Genus_taxlabel %>%
+  select(Sample:Description, treat_group:tax_label) %>%
+  group_by(Sample, exp, sludge_source, subs_cond, time) %>%
+  mutate(rel_abund = Abundance/sum(Abundance)*100) %>%
+  
+  # average the relative abundance per group of samples
+  group_by(exp, sludge_source, subs_cond, time, tax_label) %>%
+  summarise(mean_rel_abund = mean(rel_abund), .groups = "drop") %>%
+
+  # renormalize so that each group sums to 100%
+  group_by(exp, sludge_source, subs_cond, time) %>%
+  mutate(norm_rel_abund = mean_rel_abund / sum(mean_rel_abund) * 100) %>%
+  ungroup() 
+
+# Reduce genera to lower number (at least 3%, or else called other)
+Genus_pool <- group_genus_abundances %>% 
+  group_by(tax_label) %>% 
+  summarise(pool = max(norm_rel_abund) < 3, # at least in one of the samples
+            mean = mean(norm_rel_abund), 
+            .groups = "drop")
+
+# define a color vector using brewer.pal and colorset
+colvec = c(brewer.pal(8,"Dark2"),brewer.pal(8,"Set2"),brewer.pal(8,"Accent"),brewer.pal(8,"Paired"),brewer.pal(12,"Set3"),brewer.pal(9,"Set1"), brewer.pal(9,"YlGnBu"), colorset)
+
+# name the taxon colors
+inner_join(group_genus_abundances, Genus_pool, by="tax_label") %>% 
+  mutate(tax_label = if_else(pool, "Other max.<3%", tax_label)) %>% 
+  group_by(tax_label) %>%
+  summarise(norm_rel_abund = sum(norm_rel_abund), 
+            median = median(mean),
+            .groups = "drop") %>% 
+  mutate(tax_label = factor(tax_label), 
+         tax_label = fct_reorder(tax_label, median, .desc = T)) %>% 
+  arrange(desc(median)) %>% pull(tax_label) %>% unique() -> names(colvec)
+
+colvec["Other max.<3%"] <- "#D3D3D3"
+
+# Get global genus order
+plot_data <-
+inner_join(group_genus_abundances, Genus_pool, by="tax_label") %>% 
+  mutate(tax_label = if_else(pool, "Other max.<3%", tax_label)) %>% 
+  group_by(exp, sludge_source, subs_cond, time, tax_label) %>% 
+  summarise(norm_rel_abund = sum(norm_rel_abund), 
+            mean = min(mean),
+            .groups = "drop") %>% 
+  mutate(tax_label = factor(tax_label), 
+         tax_label = fct_reorder(tax_label, mean, .desc = T))
+
+genus_order <- plot_data %>%
+  group_by(tax_label) %>%
+  summarise(median_abund = median(norm_rel_abund), .groups = "drop") %>%
+  arrange(desc(median_abund)) %>%
+  pull(tax_label) %>%
+  setdiff("Other max.<3%") %>%              
+  c("Other max.<3%")           
+
+
+# plot the data per experiment
+exp_id <- unique(plot_data$exp)
+for (i in exp_id){
+  plot_Genus = 
+    plot_data %>% 
+    filter(exp == i) %>%
+    mutate(tax_label = factor(tax_label, levels = genus_order)) %>%
+    mutate(subs_cond = case_when(
+      subs_cond == "acetate + calcium" ~ "Ac + Ca",
+      TRUE ~ subs_cond)) %>%
+    group_by(sludge_source, subs_cond) %>%
+    ggplot(aes(x=time, y = norm_rel_abund, fill = tax_label)) +
+    geom_col() +
+    scale_fill_manual(name = NULL, values = colvec, drop = TRUE) + # with named color vector ordered by median Genus abundance
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x=NULL, y="Relative Abundance (%)") +
+    theme_classic() +
+    theme(
+    axis.text.x = element_markdown(angle = 0, hjust = 0.5, size = 14),  # bigger axis labels
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size = 16),
+    legend.text = element_markdown(size = 14),   # bigger legend text
+    legend.key.size = unit(18, "pt"),            # bigger legend boxes
+    legend.position = "bottom",
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(face = "bold", size = 14)
+  ) +
+  guides(fill = guide_legend(nrow=11)) +
+  facet_nested(~ sludge_source + subs_cond, 
+               scales = "free", 
+               space = "free_x")
+  print(plot_Genus)
+  ggsave(plot = plot_Genus, filename = here("results", "figures", glue("{i}_genus_abundance.pdf")), width = 14, height = 8)
+}
+
+
+```
+
+
+
+### Beta diversity analysis
+```{r total beta diversity rel_abund, message=F, fig.width=15, fig.height=6, echo=F, eval=T, warning=F, include=T, cache=F}
+
+# transform sample counts into relative abundance or CLR
+psdata_Genus_rel = transform_sample_counts(psdata_genus, function(x) x/sum(x))
+psdata_Genus_clr = microbiome::transform(psdata_genus, transform = "clr")
+
+#phyloseq::sample_data(psdata_Genus_rel)$replicate = factor(phyloseq::sample_data(psdata_Genus_rel)$replicate)
+phyloseq::sample_data(psdata_Genus_rel)$sludge_source = factor(phyloseq::sample_data(psdata_Genus_rel)$sludge_source, levels = c("Bath", "Almere", "Leeuwarden", "Beverwijk", "Winsum"))
+phyloseq::sample_data(psdata_Genus_rel)$subs_cond = factor(phyloseq::sample_data(psdata_Genus_rel)$subs_cond, levels = c("acetate", "butyrate", "acetate + calcium"))
+phyloseq::sample_data(psdata_Genus_rel)$exp = factor(phyloseq::sample_data(psdata_Genus_rel)$exp, levels = c("YXIN", "AEST"))
+
+
+# ordination
+PCoA_BC <- ordinate(psdata_Genus_rel, method = "PCoA", distance = "bray")
+PCoA_Jac <- ordinate(psdata_Genus_rel, method = "PCoA", distance = "jaccard")
+PCoA_uu <- ordinate(psdata_Genus_rel, method = "PCoA", distance = "uunifrac")
+PCoA_wu <- ordinate(psdata_Genus_rel, method = "PCoA", distance = "wunifrac")
+
+nmds_BC <- ordinate(psdata_Genus_rel, method = "NMDS", distance = "bray")
+# nmds_Jac <- ordinate(psdata_Genus_rel_v2, method = "NMDS", distance = "jaccard")
+# nmds_uu <- ordinate(psdata_Genus_rel_v2, method = "NMDS", distance = "uunifrac")
+# nmds_wu <- ordinate(psdata_Genus_rel_v2, method = "NMDS", distance = "wunifrac")
+
+# PCoA with Bray-Curtis
+# set level of subs_cond
+psdata_Genus_rel@sam_data$subs_cond <- factor(
+  psdata_Genus_rel@sam_data$subs_cond,
+  levels = c("butyrate", "acetate", "acetate + calcium")
+)
+
+plot_PCoA_BC <- 
+  plot_ordination(physeq = psdata_Genus_rel, 
+                  ordination = PCoA_BC, 
+                  type = "samples", 
+                  axes = c(1,2), 
+                  color = "time", shape = "subs_cond") + 
+  ggrepel::geom_text_repel(aes(label = time), size = 2) +
+  scale_color_manual(values = c(brewer.pal(6, "Dark2"))) + 
+  geom_point(aes(color = time,
+      shape = subs_cond)) +
+  labs(
+    color = "Time",  # Legend label
+    shape = "Substrate ") +
+  theme(
+  plot.title = element_text(hjust = 0.1, vjust = -10, size = 12),
+  legend.title = element_text(size = 12, face = "bold"),
+  legend.text = element_text(size = 10),
+  panel.background = element_rect(fill='transparent'),
+  panel.grid.major = element_line(colour = "grey90"),
+  strip.text = element_text(face = "bold"),
+  panel.border = element_rect(colour = "black", fill=NA, linewidth = 0.3),
+  axis.line.x = element_line(color="black", size = 0.3),
+  axis.line.y = element_line(color="black", size = 0.3))+
+  #ggtitle("Bray Curtis\n(presence and abundance)") + 
+  facet_nested(~exp + sludge_source)
+  
+# PCoA with weighthed unifrac
+plot_PCoA_wu <- 
+  plot_ordination(physeq = psdata_Genus_rel, 
+                  ordination = PCoA_wu, 
+                  type = "samples", 
+                  axes = c(1,2), 
+                  color = "time", shape = "subs_cond") + 
+  ggrepel::geom_text_repel(aes(label = time), size = 2) +
+  scale_color_manual(values = c(brewer.pal(6, "Dark2"))) + 
+  geom_point(aes(color = time,
+      shape = subs_cond)) +
+  labs(
+    color = "Time",  # Legend label
+    shape = "Substrate ") +
+  theme(
+  plot.title = element_text(hjust = 0.1, vjust = -10, size = 12),
+  legend.title = element_text(size = 12, face = "bold"),
+  legend.text = element_text(size = 10),
+  panel.background = element_rect(fill='transparent'),
+  panel.grid.major = element_line(colour = "grey90"),
+  strip.text = element_text(face = "bold"),
+  panel.border = element_rect(colour = "black", fill=NA, linewidth = 0.3),
+  axis.line.x = element_line(color="black", size = 0.3),
+  axis.line.y = element_line(color="black", size = 0.3))+
+  #ggtitle("Bray Curtis\n(presence and abundance)") + 
+  facet_nested(~exp + sludge_source)
+
+## NMDs with BC
+#prepare the data
+plot_NMDS_BC <- plot_ordination(psdata_Genus_rel, nmds_BC, type = "samples", axes = 1:2, color = "time", shape = "subs_cond") +
+  geom_point(aes(color = time,
+      shape = subs_cond)) +
+  labs(
+    color = "Time",  # Legend label
+    shape = "Substrate ") +
+  ggrepel::geom_text_repel(aes(label = time), size = 2) +
+  theme(
+  plot.title = element_text(hjust = 0.1, vjust = -10, size = 12),
+  legend.title = element_text(size = 12, face = "bold"),
+  legend.text = element_text(size = 10),
+  panel.background = element_rect(fill='transparent'),
+  panel.grid.major = element_line(colour = "grey90"),
+  strip.text = element_text(face = "bold"),
+  panel.border = element_rect(colour = "black", fill=NA, linewidth = 0.3),
+  axis.line.x = element_line(color="black", size = 0.3),
+  axis.line.y = element_line(color="black", size = 0.3))+
+  facet_nested(~exp + sludge_source)
+  
+
+# save plots
+ggsave(plot = plot_PCoA_BC, filename = here("results", "figures", glue("{proj}_plot_beta_diversity_PCoA_BC.pdf")), width = 10, height =5)
+
+ggsave(plot = plot_PCoA_wu, filename = here("results", "figures", glue("{proj}_plot_beta_diversity_PCoA_wu.pdf")), width = 10, height =5)
+
+ggsave(plot = plot_NMDS_BC, filename = here("results", "figures", glue("{proj}_plot_beta_diversity_NMDS_BC.pdf")), width = 10, height =5)
+
+```
+
+### Summarize abundance data
+``` {r abundance data for iToL, message=F, echo=T, eval=T, warning=F, include=T, cache=T}
+
+# prepare ASVtable
+ASV_table <- tax_table(psdata_genus) %>%
+  as.data.frame() %>%
+  mutate(ASV = rownames(.)) %>%
+  select(ASV, Genus)
+
+# prepare abundance data 
+
+abundance_list <- list()
+subscond_list <- unique(ps_genus$subs_cond)
+time_list <- unique(ps_genus$time)
+
+# VSSxa data
+VSSxa <- metadata %>%
+  select(Description, active_biomass_g) %>%
+  mutate(Sample = Description)
+
+for (subs in subscond_list) {
+    for (t in time_list) {
+      # Create a unique key for each combination
+    list_key <- paste(subs, t, sep = "_")
+      
+    # Filter and normalize abundance within each Sample
+    abundance_list[[list_key]] <- ps_genus %>% 
+      filter(subs_cond == subs, time == t) %>% 
+      select(Sample, Abundance, Genus) %>%
+      left_join(ASV_table, by = "Genus") %>%
+      group_by(Sample, Genus) %>%
+      summarise(Abundance = sum(Abundance), .groups = "drop_last") %>%
+      mutate(Abundance = Abundance / sum(Abundance) * 100) %>%
+      ungroup() %>%
+      mutate(subs_cond = subs, time = t) %>%
+      left_join(ASV_table, by = "Genus") %>%
+      left_join(VSSxa, by = "Sample")
+    }
+}
+
+# Combine to one long data frame
+abundance_all <- bind_rows(abundance_list)
+
+# Or save as TSV
+write.table(abundance_all, here("results", "output_data", glue("{proj}_genus_abundances.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+### Calculate delta relative abundance (after 48h PHA accumulation)
+```{r delta rel abund, message=F, echo=T, eval=T, warning=F, include=T, cache=T}
+
+## Calculate delta relative abundance after 48h PHA accumulation
+samp_pair <- data.frame(t0h = character(), t48h = character(), stringsAsFactors = FALSE)
+init_samp <- ps_genus %>%
+  filter(time == "0h") %>%
+  pull(Sample) %>%
+  unique()
+
+# pairing sampel t=0h with t=48h
+for (samp in init_samp) {
+  samp_nr <- as.integer(str_extract(samp, "\\d+"))
+  exp <- substr(samp, 1, 4)
+  
+  samp48h <- case_when(
+    exp == "YXIN" & nchar(samp_nr) == 1 ~ glue("{exp}0{samp_nr + 2}"),
+    exp == "YXIN" & nchar(samp_nr) > 1 ~ glue("{exp}{samp_nr + 2}"),
+    TRUE ~ glue("{exp}.{samp_nr + 2}")
+  )
+  
+  # Append new row
+  samp_pair <- rbind(samp_pair, data.frame(t0h = samp, t48h = as.character(samp48h)))
+}
+
+# abundance at 48h and 0h
+abundt48h <- abundance_all %>%
+  filter(time == "48h") %>%
+  mutate(t48h = Sample,
+         Abund_48h = Abundance,
+         VSSxa_48h = active_biomass_g,
+         norm_abund_48h = Abund_48h * VSSxa_48h/100) %>%
+  select(Genus, subs_cond, ASV, t48h, Abund_48h, VSSxa_48h, norm_abund_48h)
+
+abundt0h <- abundance_all %>%
+  filter(time == "0h") %>%
+  mutate(t0h = Sample,
+         Abund_0h = Abundance,
+         VSSxa_0h = active_biomass_g,
+         norm_abund_0h = Abund_0h * VSSxa_0h/100) %>%
+  select(Genus, subs_cond, ASV, t0h, Abund_0h, VSSxa_0h, norm_abund_0h)
+
+# VSSxa data
+metadata3 <- metadata %>%
+  select(Description, sludge_source, active_biomass_g) %>%
+  mutate(Sample = Description)
+
+delta_all <- samp_pair %>%
+  left_join(., abundt0h, by = "t0h") %>%
+  left_join(., abundt48h, by = c("t48h", "ASV", "Genus", "subs_cond")) %>%
+  mutate(delta_norm_abund = norm_abund_48h - norm_abund_0h) %>%
+  mutate(Sample = t0h) %>%
+  left_join(., metadata3, by = "Sample") %>%
+  mutate(sampID = glue("{Sample}_{sludge_source}"))
+
+  
+```
+
+### Prepare data in iToL format
+```{r Prepare data in iToL format, message=F, echo=T, eval=T, warning=F, include=T, cache=T}
+
+## make ASV labels
+
+# write a tsv
+header_lines <- c(
+  "LABELS", 
+  "SEPARATOR TAB",
+  "DATA"
+)
+
+# Join color info into your data
+df <- ASV_table %>%
+  select(ASV, Genus)
+
+# Set the output path
+output_file <- here("results", "output_data", "for_iToL", "iToL_ASV_labels_501genera.tsv")
+
+# Write header
+write_lines(header_lines, file = output_file)
+
+# Write data (without column names)
+write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
+
+#################################
+
+# Heatmap for genus abundance per sample
+
+abundance_list <- list()
+time_list <- unique(ps_genus$time)
+subscond_list <- unique(ps_genus$subs_cond)
+
+for (subs in subscond_list) {
+  for (t in time_list) {
+
+    # Create a unique key for the list
+    list_key <- paste(subs, t, sep = "_")
+    
+    df <- ASV_table %>%
+      left_join(abundance_all, by = "ASV") %>%
+      filter(subs_cond == subs, time == t) %>%
+      select(ASV, Sample, Abundance) %>%
+      pivot_wider(names_from = Sample, values_from = Abundance)
+  
+    # Get dynamic sample names
+    sample_cols <- colnames(df)[-1]  # Assuming ASV is the first column
+    sample_labels <- paste(sample_cols, collapse = "\t")
+      
+    # Create header lines with glue for dynamic text
+    header_lines <- c(
+      "DATASET_HEATMAP",
+      "SEPARATOR\tTAB",
+      glue("DATASET_LABEL\tabundance per sample {list_key}"),
+      glue("FIELD_LABELS\t{sample_labels}"),
+      "COLOR_MIN\t#FFFFFF",
+      "COLOR_MAX\t#FF0000",
+      "USE_MID_COLOR\t1",
+      "COLOR_MID\t#FF8080",
+      "DATA"
+    )
+      
+    # Set the output path
+    output_file <- here("results", "output_data", "for_iToL", glue("iToL_{list_key}_rel_abundance.tsv"))
+      
+    # Write header and data
+    writeLines(header_lines, con = output_file)
+    write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
+      
+    # Store to list if needed
+      abundance_list[[list_key]] <- df
+  }
+}
+
+############################
+
+# Export delta_all in iToL format
+# Heatmap for genus abundance per sample
+
+abundance_list <- list()
+subscond_list <- unique(ps_genus$subs_cond)
+
+for (subs in subscond_list) {
+  df <- delta_all %>%
+    filter(substr(Sample, 1,4) == "YXIN") %>%
+    filter(subs_cond == subs) %>%
+    select(ASV, sampID, delta_norm_abund) %>%
+    pivot_wider(names_from = sampID, values_from = delta_norm_abund)
+  
+  # Extract the sample column names (excluding ASV)
+  samp_cols <- names(df)[-1]
+
+  # Sort sample columns by sludge_source suffix (e.g., _Almere or _Bath)
+  samp_cols_sorted <- samp_cols[order(gsub(".*_", "", samp_cols))]
+
+  # Reorder columns: ASV first, then sorted samples
+  df <- df[, c("ASV", samp_cols_sorted)]
+    
+
+    # Get dynamic sample names
+    sample_cols <- colnames(df)[-1]  # Assuming ASV is the first column
+    sample_labels <- paste(sample_cols, collapse = "\t")
+      
+    # Create header lines with glue for dynamic text
+    header_lines <- c(
+      "DATASET_HEATMAP",
+      "SEPARATOR\tTAB",
+      glue("DATASET_LABEL\tdelta_norm_abund rel abundance per sample {subs}"),
+      glue("FIELD_LABELS\t{sample_labels}"),
+      "COLOR_MIN\t#FFFFFF",
+      "COLOR_MAX\t#FF0000",
+      "USE_MID_COLOR\t1",
+      "COLOR_MID\t#FF8080",
+      "DATA"
+    )
+      
+    # Set the output path
+    output_file <- here("results", "output_data", "for_iToL", glue("iToL_{subs}_delta_norm_abund_abundance.tsv"))
+      
+    # Write header and data
+    writeLines(header_lines, con = output_file)
+    write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
+      
+    # Store to list if needed
+      abundance_list[[subs]] <- df
+}
+
+```
+
+### Estimate degree of enrichment
+```{r estimate DoE, message=F, echo=T, eval=T, warning=F, include=T, cache=T}
+
+#load phaC data
+phaC_data <- as.data.frame(read_tsv(here("results", "output_data", "YXIN_AEST_PhaC_5DB_501genera.txt"))) %>%
+  select(ASV, PhaC_status)
+
+metadata <- as(sample_data(merged_ps), "data.frame") %>%
+  mutate(Sample = rownames(.)) %>%
+  select(Sample, sludge_source)
+
+# merge abundance table with phaC status
+abund_phaC <- abundance_all %>%
+  left_join(., phaC_data, by = "ASV") %>%
+  mutate(phaC_score = case_when(
+    PhaC_status == "YES" ~ 1,
+    PhaC_status == "Maybe" ~ 1,
+    TRUE ~ 0
+  ),
+  DoE = Abundance * phaC_score) %>%
+  group_by(Sample, subs_cond, time) %>%
+  summarise(sumDoE = sum(DoE, na.rm = TRUE)/100, .groups = "drop") %>%
+  left_join(metadata, by = "Sample") %>%
+  group_by(sludge_source, subs_cond, time)
+
+# prepare bar avg data
+bar_data<- abund_phaC %>%
+  summarise(avgDoE = mean(sumDoE), 
+            sdDoE = sd(sumDoE), .groups="drop")
+
+
+# Visualize the DoE
+barp <- 
+  ggplot() +
+  #avg data
+  geom_col(data = bar_data,
+           aes(x = time, y = avgDoE, fill = sludge_source)) +
+  
+  # data point
+  geom_point(data = abund_phaC,
+                aes(x = time, y= sumDoE),
+                size = 2, shape = 21) +
+  
+  scale_y_continuous(expand = c(0, 0)) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = NULL, y = "Degree of Enrichment", fill = "Sludge source") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_markdown(angle = 0, hjust = 0.5, size = 14),  # bigger axis labels
+    axis.text.y = element_text(size = 14),
+    axis.title.y = element_text(size = 16),
+    legend.text = element_markdown(size = 14),   # bigger legend text
+    legend.key.size = unit(18, "pt"),            # bigger legend boxes
+    legend.position = "bottom",
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(face = "bold", size = 14)) +
+  facet_nested_wrap(~sludge_source + subs_cond, 
+                    ncol = 6, scales = "fixed")
+  
+# save plots
+ggsave(plot = barp, 
+       filename = here("results", "figures", glue("{proj}_degree_of_enrichment.pdf")), width = 12 , height = 8)
+
+```
+
+
+### Normalize DoE with VSS data
+```{r normalize DoE with VSS, message=F, echo=T, eval=T, warning=F, include=T, cache=T}
+
+# Only for YXIN data
+abundance_YXIN <- abundance_all %>%
+  mutate(exp = substr(Sample, 1, 4)) %>%
+  filter(exp == "YXIN") %>%
+  left_join(., phaC_data, by = "ASV") %>%
+  mutate(phaC_score = case_when(
+    PhaC_status == "YES" ~ 1,
+    PhaC_status == "Maybe" ~ 1,
+    TRUE ~ 0
+  ),
+  DoE = Abundance * phaC_score) %>%
+  group_by(Sample, subs_cond, time) %>%
+  summarise(sumDoE = sum(DoE, na.rm = TRUE)/100, .groups = "drop") %>%
+  left_join(metadata, by = "Sample") %>%
+  group_by(sludge_source, subs_cond, time) 
+
+
+## prepare VSS ax data
+abund_phaC_VSS <- as(sample_data(psdata_genus), "data.frame") %>%
+  filter(exp == "YXIN") %>%
+  select(Description, active_biomass_g, tot_biomass._gVSS, PHA_content_gPHA_gVSS, replicate) %>%
+  left_join(., abundance_YXIN, by = c("Description" = "Sample")) %>%
+  mutate(PHA_prod_biomass = active_biomass_g * sumDoE,
+         NPCM = active_biomass_g - PHA_prod_biomass)
+  
+
+# Visualize the DoE
+scaling_factor <- 6 #max ylim
+
+# Prepare bar data in long format
+bar_data <- abund_phaC_VSS %>%
+  group_by(sludge_source, subs_cond, time) %>%
+  summarise(avg_PHA_prod_biomass = mean(PHA_prod_biomass),
+            #sd_PHA_prod_biomass = sd(PHA_prod_biomass),  
+            avg_sumDoE = mean(sumDoE), 
+            #sd_sumDoE = sd(sumDoE),
+            avg_active_biomass = mean(active_biomass_g),
+            #sd_active_biomass = sd(active_biomass_g),
+            avg_NPCM = mean(NPCM)) %>%
+  select(time, sludge_source, subs_cond,
+         avg_PHA_prod_biomass,
+         avg_NPCM) %>%
+  pivot_longer(
+    cols = c(avg_PHA_prod_biomass, avg_NPCM),
+    names_to = "component",
+    values_to = "value",
+    values_drop_na = TRUE
+  ) %>%
+  mutate(component = recode(component,
+                     "avg_PHA_prod_biomass" = "PHA-producer",
+                     "avg_NPCM" = "Non-PHA producer")) %>%
+  arrange(sludge_source, subs_cond, time, factor(component, levels = c("PHA-producer", "Non-PHA producer"))) %>%
+  group_by(sludge_source, subs_cond, time)
+
+point_data <- abund_phaC_VSS %>%
+  select(Description, sludge_source, subs_cond, time,  active_biomass_g, PHA_prod_biomass, sumDoE) %>%
+  pivot_longer(
+    cols = c(active_biomass_g, PHA_prod_biomass),
+    names_to = "component",
+    values_to = "value",
+    values_drop_na = TRUE)
+
+line_data <- abund_phaC_VSS %>%
+  group_by(sludge_source, subs_cond, time) %>%
+  summarise(avg_sumDoE = mean(sumDoE))
+  
+
+# Visualize
+barp <- ggplot() +
+  # stacked bar for active biomass data
+  geom_col(data = bar_data,
+           aes(x = time, y = value, fill = component),
+           position = "stack") +
+  
+  # data point
+  geom_point(data = point_data,
+                aes(x = time, y= value),
+                size = 2, shape = 21) +
+
+  # line for DoE
+  geom_line(data = line_data,
+            aes(x = time, y = avg_sumDoE * scaling_factor, group = interaction(sludge_source, subs_cond), color = "Degree of enrichment"),
+             size = 0.8) +
+
+  # data point
+  geom_point(data = point_data,
+           aes(x = time, y = sumDoE * scaling_factor, color = "Degree of enrichment"),
+           size = 2, shape = 21) +
+
+  # --- Axes and scales ---
+  scale_y_continuous(
+    name = "Active Biomass (gVSSxa)",
+    sec.axis = sec_axis(~ . / scaling_factor, name = "Degree of enrichment"),
+    expand = c(0, 0),
+    limits = c(0,6)
+  ) +
+
+  # --- Facet and theme ---
+  facet_nested_wrap(~sludge_source + subs_cond, ncol = 6, scales = "fixed") +
+  scale_fill_manual(values = c("PHA-producer" = "#FDB863", "Non-PHA producer" = "#999999")) +
+  scale_color_manual(values = c("Degree of enrichment" = "#2166AC")) +
+  labs(x = NULL, fill = "Active biomass (gVSSxa)", color = NULL, size = 12) +
+  theme_classic() +
+  theme(
+    axis.text.x = element_markdown(angle = 0, hjust = 0.5),
+    legend.position = "bottom",
+    legend.key.size = unit(12, "pt"),
+    legend.text = element_markdown(size = 10),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+  
+# save plots
+ggsave(plot = barp, 
+       filename = here("results", "figures", glue("{proj}_degree_of_enrichment_VSS.pdf")), width = 8 , height = 6)
+
+
+### Calculate the average PHA content in PHA storing fraction
+pha_content_data <- abund_phaC_VSS %>%
+  mutate(avg_PHA_in_PCM = (PHA_content_gPHA_gVSS * tot_biomass._gVSS)/((PHA_content_gPHA_gVSS * tot_biomass._gVSS) + (sumDoE * active_biomass_g)))  %>%
+  group_by(sludge_source, subs_cond, time) %>%
+  summarise(avg_PHA_content = mean(avg_PHA_in_PCM))%>%
+  select(time, sludge_source, subs_cond,
+         avg_PHA_content)
+
+
+```
+
+### ONLY DoE without VSS bar
+```{r}
+
+barp <- ggplot() +
+  # line for DoE
+  geom_line(data = line_data,
+            aes(x = time, y = avg_sumDoE * scaling_factor, group = interaction(sludge_source, subs_cond), color = "Degree of enrichment"),
+             size = 0.8) +
+
+  # data point
+  geom_point(data = point_data,
+           aes(x = time, y = sumDoE * scaling_factor, color = "Degree of enrichment"),
+           size = 2, shape = 21) +
+
+  # --- Axes and scales ---
+  scale_y_continuous(
+    name = "Active Biomass (gVSSxa)",
+    sec.axis = sec_axis(~ . / scaling_factor, name = "Degree of enrichment"),
+    expand = c(0, 0),
+    limits = c(0,6)
+  ) +
+
+  # --- Facet and theme ---
+  facet_nested_wrap(~sludge_source + subs_cond, ncol = 6, scales = "fixed") +
+  scale_fill_manual(values = c("PHA-producer" = "#FDB863", "Non-PHA producer" = "#999999")) +
+  scale_color_manual(values = c("Degree of enrichment" = "#2166AC")) +
+  labs(x = NULL, fill = "Active biomass (gVSSxa)", color = NULL, size = 12) +
+  theme_classic() +
+  theme(
+    axis.text.x = element_markdown(angle = 0, hjust = 0.5),
+    legend.position = "bottom",
+    legend.key.size = unit(12, "pt"),
+    legend.text = element_markdown(size = 10),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+
+# save plots
+ggsave(plot = barp, 
+       filename = here("results", "figures", glue("{proj}_degree_of_enrichment_only.pdf")), width = 8 , height = 6)
+
+
+```
+
+### PHA-producer barplot per replicate
+```{r}
+
+# load PHA data
+phaC_data <- as.data.frame(read_tsv(here("results", "output_data", "YXIN_AEST_PhaC_5DB_501genera.txt"))) %>%
+  mutate(OTU = ASV) %>%
+  select(OTU, PhaC_status)
+
+
+# Calculate genus abundances per group of samples
+group_genus_abundances <- ps_Genus_taxlabel %>%
+  select(OTU:Description, treat_group:tax_label, replicate) %>%
+  group_by(Sample, exp, sludge_source, subs_cond, time) %>%
+  mutate(rel_abund = Abundance/sum(Abundance)*100) 
+
+# PHA producers only ver 2
+PCM_data <- group_genus_abundances %>% 
+  left_join(phaC_data, by= "OTU") %>% 
+  mutate(PCM_stat = case_when(
+    PhaC_status == "Unknown" ~ "Non-PHA-producer",
+    TRUE ~ tax_label
+  )) %>% 
+  group_by(exp, sludge_source, subs_cond, time, OTU, PCM_stat, replicate) %>% 
+  summarise(rel_abund = sum(rel_abund), .groups = "drop") %>%
+  # renormalize after filtering
+  group_by(exp, sludge_source, subs_cond, time, replicate) %>% 
+  mutate(fin_norm_rel_abund = rel_abund / sum(rel_abund) * 100) %>%
+  ungroup() %>%
+  left_join(., Genus_pool, by= c("PCM_stat" = "tax_label"))
+
+
+## Plot
+# assign color for Non-PHA-producer
+colvec["Non-PHA-producer"] <- "#A9A9A9"
+colvec["Other PHA-producer max.<3%"] <- "#D3D3D3"
+
+genus_order <- c(genus_order, "Other PHA-producer max.<3%", "Non-PHA-producer")
+
+# create plot for each dataset (i.e., YXIN and AEST) 
+exp_id <- unique(PCM_data$exp)
+for (i in exp_id){
+  plot_Genus = 
+    PCM_data %>%
+    filter(exp == i) %>%
+    mutate(PCM_stat = if_else(pool, "Other PHA-producer max.<3%", PCM_stat)) %>%
+    mutate(PCM_stat = case_when(
+      is.na(PCM_stat) ~ "Non-PHA-producer", 
+      TRUE~ PCM_stat
+    )) %>%
+    mutate(PCM_stat = factor(PCM_stat, levels = genus_order)) %>%
+    group_by(sludge_source, subs_cond) %>%
+    ggplot(aes(x=time, y = fin_norm_rel_abund, fill = PCM_stat)) +
+    geom_col() +
+    scale_fill_manual(name = NULL, values = colvec, drop = TRUE) + # with named color vector ordered by median Genus abundance
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x=NULL, y="Relative Abundance (%)") +
+    theme_classic() +
+    theme(axis.text.x = element_markdown(angle = 0, hjust = 0.5, size = 10),
+          legend.text = element_markdown(),
+          legend.key.size = unit(10, "pt"),
+          legend.position = "bottom",
+          strip.background = element_rect(colour = "white"),
+          strip.text = element_text(face = "bold", size = 12)) +
+    guides(fill = guide_legend(nrow=5))+
+    facet_nested(~ sludge_source + subs_cond + replicate, 
+               scales = "free", 
+               space = "free_x")
+  print(plot_Genus)
+  ggsave(plot = plot_Genus, filename = here("results", "figures", glue("{i}_PHA_producers_only.pdf")), width = 12, height = 6)
+}
+
+```
+
+### Relative abundance at Class level
+```{r class level}
+
+# agglomerate at class level
+psdata_class <- psdata_resolved %>%
+  tax_glom(., "Class")
+
+# make a df of class relative abundance; pool bacterial class <3%
+# filter t=0h, to use only initial sludge
+ps_class <- psmelt(psdata_class) %>%
+  filter(time == "0h") %>%
+  group_by(Class) %>%
+  summarise(Abundance = sum(Abundance), .groups = "drop") %>%
+      mutate(Abundance = Abundance / sum(Abundance) * 100) %>%
+      ungroup() %>%
+  mutate(tax_label = case_when(
+    Abundance < 3 ~ "Other rel abund < 3%",
+    TRUE ~ Class
+  )) %>%
+  group_by(tax_label) %>%
+  summarise(Abundance = sum(Abundance)) %>%
+  arrange(desc(Abundance))
+
+# Create the pie chart
+pie_chart <- ggplot(ps_class, aes(x = "", y = Abundance, fill = tax_label)) +
+  geom_col(color = "black") +
+  geom_label(aes(label = round(Abundance, 2)),
+             color = "white",
+             size = 4,  # Increase label text size here
+             position = position_stack(vjust = 0.5),
+             show.legend = FALSE) +
+  coord_polar(theta = "y") +
+  theme_void() +
+  labs(fill = "Class") +  # Rename legend
+  theme(legend.text = element_text(size = 12),       # Increase legend text
+        legend.title = element_text(size = 14))      # Increase legend title
+
+print(pie_chart)
+
+```
+
+
+### 16S rRNA copies and VSS 
+
+``` {r}
+
+## import data
+copies16S_data <- as.data.frame(read_tsv(here("data", "processed", "YXIN_16SrRNA_copies_in_samples.txt"))) %>%
+  filter(condition == "Low_N")
+
+Xpha_data <- abund_phaC_VSS %>%
+  select(Description, PHA_prod_biomass)
+
+
+plot_data <- copies16S_data %>%
+  left_join(., Xpha_data, by= c("SampleID" = "Description")) %>%
+  group_by(sludge_source, substrate, time, replicate) %>%
+  summarize(tot_biomass_gVSS = mean(`tot_biomass _gVSS`),
+            active_biomass_g = mean(active_biomass_g),
+            log10_copies_mL_samples = mean(log10_copies_mL_samples),
+            PHA_prod_biomass = mean(PHA_prod_biomass))
+
+# Data for biomass values
+biomass_long <- plot_data %>%
+  pivot_longer(cols = c(active_biomass_g, tot_biomass_gVSS),
+               names_to = "measurement",
+               values_to = "value") %>%
+  mutate(measurement = recode(measurement,
+                              "active_biomass_g" = "Active biomass",
+                              "tot_biomass_gVSS" = "Total biomass"))
+
+# Data for gene copies (log-transformed)
+gene_copies <- plot_data
+
+# Top plot: biomass
+biomass_plot <- biomass_long %>%
+  ggplot(aes(x = time, y = value, color = measurement, shape = factor(replicate))) +
+  geom_point() +
+  facet_nested(~ sludge_source + substrate, scales = "fixed", space = "free_x") +
+  labs(y = "Biomass (g)", color = "Measurement", shape = "Replicate") +
+  theme_bw()
+
+# Bottom plot: gene copies (log10)
+gene_plot <- gene_copies %>%
+  ggplot(aes(x = time, y = log10_copies_mL_samples, shape = factor(replicate))) +
+  geom_point(color = "black") +
+  facet_nested(~ sludge_source + substrate, scales = "fixed", space = "free_x") +
+  labs(y = expression(log[10]~"copies/mL sludge"), shape = "Replicate") +
+  theme_bw()
+
+library(patchwork)
+
+# combine biomass and gene_plot
+combined_plot <- biomass_plot / gene_plot +
+  plot_layout(ncol = 1, heights = c(2, 1))  # top plot is taller
+
+print(combined_plot)
+
+# save plots
+ggsave(plot = combined_plot, 
+       filename = here("results", "figures", glue("{proj}_16SrRNA_copies_biomass.pdf")), width = 8 , height = 6)
+
+
+```
+### Most abundance PHA producers in the dataset
+```{r}
+
+# Check for most abundance PHA producers in the initial sludge (t=0h)
+pha_prod_all <- ps_genus %>%
+  filter(time == "0h") %>%
+  group_by(OTU, Genus, time) %>%
+  summarise(Abundance = sum(Abundance), .groups = "drop") %>%
+  group_by(time) %>%
+  mutate(rel_abund = Abundance/sum(Abundance)) %>%
+  left_join(., phaC_data, by = "OTU") %>%
+  filter(PhaC_status %in% c("YES", "Maybe")) %>%
+  arrange(desc(Abundance))
+
+View(pha_prod_all)
+  
+```
+
+### Statistical analysis
+```{r}
+
+#psdata_Genus_rel = tax_glom(psdata_Genus_rel, "Genus")
+sample_data(psdata_Genus_rel)$subs_cond = factor(sample_data(psdata_Genus_rel)$subs_cond)
+
+# sample data
+sam_data <- data.frame(sample_data(psdata_Genus_rel))
+asv_data <- vegdist(t(otu_table(psdata_Genus_rel)), method = "bray")
+# calculate adonis permanova on granules only on ASV level Bray-Curtis dissimilarity (tested within sludge source)
+
+# check betadispersion
+betadisper_bc <- betadisper(asv_data, with(sam_data, interaction(sludge_source, subs_cond, time, exp)))
+anova(betadisper_bc)
+#permutest(betadisper_bc,  pairwise=TRUE)
+
+sam_data$strata_combined <- interaction(sam_data$sludge_source, sam_data$exp, drop = TRUE)
+
+adonis_bc_fullmodel <- adonis2(asv_data ~  sludge_source * subs_cond * time  * exp,
+                              permutations = 999,
+                              strata = sam_data$strata_combined,
+                              data = sam_data,
+                              by = "terms")
+
+
+## three-way interaction with time not significant, 2-way interaction for sludge_source * subs_cond also not significant
+adonis_bc_reducedmodel = adonis2(asv_data ~  sludge_source + subs_cond + time + exp, 
+                    permutations = 999, 
+                    strata = sam_data$strata_combined,
+                    data = sam_data,
+                    by = "terms")
+
+# view PERMANOVA output
+adonis_bc_reducedmodel
+
+
+```
+
+```{r PERMANOVA statistics for initial WAS only}
+
+#psdata_Genus_rel = tax_glom(psdata_Genus_rel, "Genus")
+sample_data(psdata_Genus_rel)$subs_cond = factor(sample_data(psdata_Genus_rel)$subs_cond)
+
+# sample data
+psdata_Genus_rel_0h <-
+  prune_taxa(taxa_sums(
+    subset_samples(psdata_Genus_rel, time  == "0h")) > 0,
+    subset_samples(psdata_Genus_rel, time  == "0h")
+    )
+  
+sam_data <- data.frame(sample_data(psdata_Genus_rel_0h))
+asv_data <- vegdist(t(otu_table(psdata_Genus_rel_0h)), method = "bray")
+# calculate adonis permanova on granules only on ASV level Bray-Curtis dissimilarity (tested within sludge source)
+
+# check betadispersion
+betadisper_bc <- betadisper(asv_data, with(sam_data, interaction(exp, sludge_source)))
+anova(betadisper_bc)
+permutest(betadisper_bc,  pairwise=TRUE)
+
+adonis_bc_fullmodel = adonis2(asv_data ~ exp * sludge_source, 
+                    permutations = 999, 
+                    strata = sam_data$exp, 
+                    data = sam_data, 
+                    by = "terms")
+## three-way interaction with time not significant, 2-way interaction for sludge_source * subs_cond also not significant
+adonis_bc_reducedmodel = adonis2(asv_data ~ sludge_source + exp, 
+                    permutations = 999, 
+                    strata = sam_data$exp, 
+                    data = sam_data,
+                    by = "terms")
+
+```
+

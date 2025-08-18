@@ -1,0 +1,208 @@
+---
+title: "Identification of PhaC-harboring Genera"
+author: "ENAT"
+date: "2025-06-05"
+output: html_document
+---
+
+# Identification of Genera with PhaC gene
+##settings
+```{r , eval=TRUE, echo=T, include=T, message=FALSE, warning=FALSE}
+
+library(here)
+
+# set optional parameters
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE, 
+                      message = FALSE,
+                      root.dir = here())
+options(scipen = 999, digits = 3)
+
+# load libraries
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
+library(glue)
+
+```
+
+## import physeq data
+``` {r load YXIN_AEST phyloseq object, message=F, echo=T, eval=T, warning=T, include=T, cache=F}}
+
+# load YXIN_AEST data
+merged_ps = readRDS(here("data", "processed", "for_iCAMP", "YXIN_AEST_physeq.rds"))
+
+# agglomerate at genus level
+psdata_genus <- merged_ps %>%
+  tax_glom(., "Genus")
+
+```
+
+
+## prepare data from Data bases
+```{r load all phaC data from DB, message=F, echo=T, eval=T, warning=T, include=T, cache=F}}
+
+################## data from KEGG 
+# Retrieved from KEGG with query: K03821
+kegg <- as.data.frame(read_tsv(here("data", "raw", "PhaC_status_data",  "KEGG_Genus_PhaC.txt")))
+
+################# data from GTDB (Pieter's data)
+# Pieter's data only has gtdbid without the classification. Thus, we assign the id to its tax first
+# GTDB tax data is retrieved from https://data.ace.uq.edu.au/public/gtdb/data/releases/ (latest release)
+gtdb <- as.data.frame(read_tsv(here("data", "raw", "PhaC_status_data",  "gtdb_tax_bac120_taxonomy_r226.tsv")))
+
+# assign column names
+col_name <- c("ID", "tax_lable")
+colnames(gtdb) <- col_name
+
+gtdb_cleaned <- gtdb %>%
+  separate(., col = tax_lable,
+           into = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus_uncleaned", "Species"),
+           sep = ";",
+           remove = TRUE  # Keep original column if you want
+  ) %>%
+  mutate(Genus = substr(Genus_uncleaned, 4, length(Genus_uncleaned)))
+
+gtdb_pos <- as.data.frame(read_csv(here("data", "raw", "PhaC_status_data",  "phaC_gene_occurrence_Bacteria_annotree_All-occurrence-hit.csv"))) %>%
+  mutate(ID = gtdbId) %>%
+  select(ID) %>%
+  left_join(gtdb_cleaned, by = "ID") %>%
+  select(ID, Genus) %>%
+  drop_na()
+
+gtdb_pos_genera <- data.frame(Genus = unique(gtdb_pos$Genus)) %>%
+  mutate(gtdb = "YES")
+
+########### data from NCBI
+# Retrieved from NCBI with query: "PhaC[Gene Name]) AND Bacteria[organism]
+ncbi <- as.data.frame(read_tsv(here("data", "raw", "PhaC_status_data", "NCBI_phac.txt"))) %>%
+  select(tax_id, Org_name, GeneID) %>%
+  mutate(Genus = str_extract(Org_name, "^[A-Za-z]+"))
+
+ncbi_pos_genera <- data.frame(Genus = unique(ncbi$Genus)) %>%
+  mutate(ncbi = "YES")
+
+################# data from Uniprotkb
+# Retrieved from UniprotKB with query: gene:PhaC AND taxonomy: eubacteria
+uniprot <- readLines(here("data", "raw", "PhaC_status_data", "uniprotkb_gene_PhaC_AND_taxonomy_id.fasta")) 
+uniprot_entries <- uniprot[grepl("^>", uniprot)]
+uniprot <- data.frame(entry = uniprot_entries, stringsAsFactors = FALSE) %>%
+  mutate(Genus = str_extract(entry, "(?<=OS=)[A-Za-z]+"))
+
+uniprot_pos_genera <- data.frame(Genus = unique(uniprot$Genus)) %>%
+  mutate(uniprot = "YES")
+
+################# data from eggNOG
+# Retrieved from eggNOG with query: querygene: PHAC AND target taxa: Bacteria
+col_name <- c("eggnogID", "geneID", "Org_name", "unknown", "aliases")
+eggnog <- as.data.frame(read_tsv(here("data", "raw", "PhaC_status_data", "eggNOG_phac_extended_members.txt")))
+colnames(eggnog) <- col_name
+
+eggnog <- eggnog %>%
+  select(geneID, Org_name, aliases) %>%
+  mutate(Genus = str_extract(Org_name, "^[A-Za-z]+"))
+
+eggnog_pos_genera <- data.frame(Genus = unique(eggnog$Genus)) %>%
+  mutate(eggnog = "YES")
+
+```
+
+
+## Classify the genera based on its PhaC status
+``` {r PhaC-confirmed genera, message=F, echo=T, eval=T, warning=T, include=T, cache=F}}
+
+# merge YXIN_AEST data with phac data from DBs
+classified <- tax_table(psdata_genus) %>%
+  as.data.frame() %>%
+  mutate(ASV = rownames(.)) %>%
+  left_join(gtdb_pos_genera, by = "Genus") %>%
+  left_join(kegg, by = "Genus") %>%
+  left_join(uniprot_pos_genera, by = "Genus") %>%
+  left_join(eggnog_pos_genera, by = "Genus") %>%
+  left_join(ncbi_pos_genera, by = "Genus") %>%
+  mutate(
+    PhaC_status = case_when(
+      kegg == "YES" | gtdb == "YES" | ncbi == "YES" | uniprot == "YES" | eggnog == "YES" ~ "YES",
+      TRUE ~ "Unknown"
+    ) # if the genera is recorded as having PhaC gene in at least 1 DB ~ "YES"
+  ) %>%
+  # Adjust Genus name (for iToL)
+  mutate(Genus = Genus %>%
+           # Remove content in square brackets (including brackets)
+           str_remove_all("\\[.*?\\]") %>%
+           # Replace space with "_" if there are 2+ words
+           if_else(str_count(., "\\s+") >= 1, str_replace_all(., " ", "_"), .) %>%
+           # Replace "(" with "-"
+           str_replace_all("\\(", "-") %>%
+           # Handle ")": remove if at end, replace with "-" otherwise
+           str_replace_all("\\)(?=$)", "") %>%         # Remove if at end
+           str_replace_all("\\)", "-")                 # Replace other occurrences
+         )
+
+# Get unique families with PhaC_status == "YES"
+pos_fam <- classified %>%
+  filter(PhaC_status == "YES") %>%
+  distinct(Family) %>%
+  pull(Family)  # Extract as character vector
+
+# Flag possible PhaC-harboring genus as "Maybe"
+classified_final <- classified %>%
+  mutate(
+    PhaC_status = case_when(
+      Family %in% pos_fam & PhaC_status == "Unknown" ~ "Maybe",
+      TRUE ~ PhaC_status
+    )
+  )
+  
+# save as TSV
+write.table(classified_final, here("results", "output_data", "YXIN_AEST_PhaC_5DB_501genera.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+
+## Prepare Genera-PhaC list for iToL
+``` {r prepare PhaC list for iToL}
+
+# prepare the data
+YXIN_AEST_genus <- tax_table(psdata_genus) %>%
+  as.data.frame() %>%
+  mutate(ASV = rownames(.)) %>%
+  select(ASV) 
+
+# Phac Status
+
+phac_status <- c("YES", "Unknown", "Maybe")
+phac_col <- c("#81C784", "#E0E0E0", "#FFFF00")
+
+df <- YXIN_AEST_genus %>%
+  left_join(classified_final, by = "ASV") %>%
+  mutate(color = case_when(
+    PhaC_status == "YES" ~ phac_col[1],
+    PhaC_status == "Unknown" ~ phac_col[2],
+    PhaC_status == "Maybe" ~ phac_col[3])) %>%
+  select(ASV, color, PhaC_status)
+
+# write a tsv
+header_lines <- c(
+  "DATASET_COLORSTRIP", 
+  "SEPARATOR\tTAB",
+  "DATASET_LABEL\tPhaC_501genera",
+  "LEGEND_TITLE\tPhaC status",
+  glue("LEGEND_COLORS\t{glue_collapse(phac_col, sep = '\t')}"),
+  glue("LEGEND_LABELS\t{glue_collapse(phac_status, sep = '\t')}"),
+  "DATA"
+)
+
+# Set the output path
+if (!dir.exists(here("results", "output_data", "for_iToL"))) {
+  dir.create(here("results", "output_data", "for_iToL"), recursive = TRUE)}
+output_file <- glue(here("results", "output_data", "for_iToL", "iToL_PhaC_status_501genera.tsv"))
+
+# Write header
+write_lines(header_lines, file = output_file)
+
+# Write data (without column names)
+write.table(df, file = output_file, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE, append = TRUE)
+
+```

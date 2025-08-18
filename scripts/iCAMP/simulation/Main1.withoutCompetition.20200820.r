@@ -106,7 +106,7 @@ simmu<-function(prefix,op,bin.size,...)
     }
     ABP
   }
-}
+
   
   
   #######################################

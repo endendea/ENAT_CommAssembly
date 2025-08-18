@@ -1,7 +1,7 @@
 ---
-title: "Main.iCAMPtest.YXINt0"
+title: "Main.iCAMP.test"
 author: "ENAT"
-date: "2025-06-11"
+date: "2025-07-01"
 output: html_document
 ---
 
@@ -29,11 +29,12 @@ library(bigmemory)
 library(iCAMP)
 library(epiR)
 library(stringr)
-
+library(dplyr)
 
 ```
 
-``` {r}
+```{r}
+
 # 2 # define settings
 # give a precode for a certain algorithm/parameter setting. Run different settings and compare the performance summary to optimize the iCAMP settings.
 # for example
@@ -47,40 +48,35 @@ phylo.rand.scale="within.bin";taxa.rand.scale="across.all";phylo.metric="bMPD"
 ds=0.2;bin.size=24;sig.index="Confidence"
 correct.special=TRUE;unitsum=TRUE;ses.cut=1.96;rc.cut=0.95;conf.cut=0.975
 
-######
 nworker=4 # parallel thread number
-dirpattern="d0" # set some pattern if you want to test the performance with a certain type of simulated situations
+dirpattern="d0" # set some pattern if you want to test the performance with a certian type of simulated situations
 
 ```
 
-``` {r}
+```{r test function}
 
 # 3 # basic evalution for each situation
 
 sim.test<-function(sim.file,wd,...)
 {
-  # make wdm as workdir
-  wd=iwd(wd)
-  prefix <- paste0(precode, sub(".comm.tree.pd.*.rda$", "", basename(sim.file)))
-  print(prefix)
   
-  # assign comm, pd, tree, and ABP from the rda file/object
+  wd=iwd(wd)
+  prefix=paste0(precode,sub(".comm.tree.pd.*.rda$","",substring(sim.file,regexpr("\\/[^\\/]*$",sim.file)+1)))
+  print(prefix)
+
   simd=lazyopen(sim.file)
   comm=simd$comm
   pd=simd$pd
   tree=simd$tree
   ABP=simd$ABP
   
-  # create subdir
   pd.wd=paste0(wd,"/",prefix,".pdbig")
   if(!dir.exists(pd.wd)){dir.create(pd.wd)}
-  # make pdwd as workdir
   iwd(pd.wd)
-  # calculate phylogenetic distance
   if(file.exists("pd.bin"))
   {
     pd.big=list()
-    pd.big$tip.label=lazyopen("pd.taxon.name.csv")
+    pd.big$tip.label=lazyopen("pd.taxon.name.csv")[,1]
     pd.big$pd.wd=pd.wd
     pd.big$pd.file="pd.desc"
     pd.big$pd.name.file="pd.taxon.name.csv"
@@ -99,7 +95,6 @@ sim.test<-function(sim.file,wd,...)
   
   if(unitsum){unit.sum=rowSums(comm)}else{unit.sum=NULL}
   
-  # perform iCAMP analysis for the simulated data
   library(iCAMP)
   icamp.res=icamp.big(comm=comm,pd.desc=pd.big$pd.file, pd.spname=pd.big$tip.label, 
                       pd.wd=pd.big$pd.wd,rand=10,tree=tree,
@@ -112,8 +107,6 @@ sim.test<-function(sim.file,wd,...)
                       correct.special=correct.special,unit.sum=unit.sum,
                       special.method="depend",ses.cut = ses.cut,rc.cut = rc.cut,
                       conf.cut=conf.cut,omit.option="no",meta.ab=NULL)
-  
-  
   source(paste0(code.wd,"/evaluate.sim.r"))
   if(!with.competition)
   {
@@ -121,13 +114,15 @@ sim.test<-function(sim.file,wd,...)
   }else{
     iceva=evaluate.sim(icamp.res.detail=icamp.res$detail,ABP=ABP,comm=comm, sel=TRUE)
   }
-  save(iceva,file = paste0(pd.wd,"/",prefix,".iCAMP.evaluate.rda"))
+  save(iceva,file = paste0(wd,"/",prefix,".iCAMP.evaluate.rda"))
   prefix
 }
 
+###############
+
 ```
 
-``` {r}
+```{r loop through the sim file}
 
 simtestx<-function(prefix,...)
 {
@@ -140,23 +135,20 @@ simtestx<-function(prefix,...)
   }
   sim.files
 }
-
 iwd(wdm)
-prefixss=list.files(path=wdm,full.names = FALSE,recursive = FALSE)
+prefixss=list.dirs(path=wdm,full.names = FALSE,recursive = FALSE)
 prefixs=prefixss[grep(pattern = dirpattern,prefixss)]
 prefixs
 length(prefixs)
-
 ########
 for(ps in 1:length(prefixs))
 {
-  sim.test(prefixs[ps], wdm)
+  simtestx(prefixs[ps])
 }
-
 
 ```
 
-```{r}
+``` {r}
 
 # 4 # summary the evalution from different situations
 iwd(wdm)
@@ -187,38 +179,33 @@ for(x in 1:length(prefixs))
   }
   
   wdi=iwd(paste0(wdm,"/",prefixi))
+  print(wdi)
+  print(getwd())
   evsi.fs=list.files(path = wdi,pattern = ".evaluate.rda$")
   
   for(j in 1:length(evsi.fs))
   {
     fsij=evsi.fs[j]
+    print(fsij)
     situj=substr(fsij,regexpr(".S[1-15]",fsij)+1,regexpr(".iCAMP",fsij)-1)
     evsij=lazyopen(fsij)
-    print(evsij$Pgk)
     Puvml[[j]]=data.frame(Scenario=senai,Abinsize=abszi,ds=dsi,situation=situj,evsij$Puv,stringsAsFactors = FALSE)
     Pgkml[[j]]=data.frame(Scenario=senai,Abinsize=abszi,ds=dsi,situation=situj,evsij$Pgk,stringsAsFactors = FALSE)
     Puvkml[[j]]=data.frame(Scenario=senai,Abinsize=abszi,ds=dsi,situation=situj,evsij$Puvk,stringsAsFactors = FALSE)
   }
   Puvm=Reduce(rbind,Puvml)
   Pgkm=Reduce(rbind,Pgkml)
-  Pgkm=Pgkm[which(Pgkm$RA.bin>0),,drop=FALSE]
+  #Pgkm=Pgkm[which(Pgkm$RA.bin>0),,drop=FALSE]
   Puvkm=Reduce(rbind,Puvkml)
-  Puvkm=Puvkm[which(Puvkm$RelativeAbundance>0),,drop=FALSE]
-  print(Puvkm)
+  #Puvkm=Puvkm[which(Puvkm$RelativeAbundance>0),,drop=FALSE]
   
   STexp=rowSums(Puvm[,paste0(c("HD","DL","DR"),".PtExpect"),drop=FALSE])
   STest=rowSums(Puvm[,paste0(c("HD","DL","DR"),".PtObs"),drop=FALSE])
-
-  
   STuv=data.frame(Approach="iCAMP",Scenario=senai,ABinSize=abszi,Act.ds=dsi,CompetitionRatio=compri,Situation=Puvm$situation,
-                  Level="community", Plot=paste0(Puvm$samp1,Puvm$samp2), STexp=STexp,STest=STest,stringsAsFactors = FALSE)
-  
-  #check
-  cat("nrow(Puvm):", nrow(Puvm), "\n")
-  cat("length(STexp):", length(STexp), " | length(STest):", length(STest), "\n")
+                  Level="community", Plot=paste0(Puvm$samp1,Puvm$samp2),STexp=STexp,STest=STest,stringsAsFactors = FALSE)
   
   ccc_result <- epi.ccc(STexp, STest)
-  stevk <- c(ccc_result$rho.c[,1], ccc_result$rho.c[,2])  # estimate and CI
+  stev <- c(ccc_result$rho.c[,1], ccc_result$rho.c[,2])  # estimate and CI
   #stev=epi.ccc(x=STexp,y=STest,out.vector = TRUE)[1:2]
   STexpk=rowSums(Pgkm[,paste0(c("HD","DL","DR"),".PtExpect"),drop=FALSE])
   STestk=rowSums(Pgkm[,paste0(c("HD","DL","DR"),".PtObs"),drop=FALSE])
@@ -239,7 +226,6 @@ for(x in 1:length(prefixs))
   stevkw <- c(ccc_result$rho.c[,1], ccc_result$rho.c[,2])  # estimate and CI
   #stevkw=epi.ccc(x=STexpk*Pgkm$RA.bin,y=STestk*Pgkm$RA.bin,out.vector = TRUE)[1:2]
   STevl[[x]]=data.frame(STuvk[1:3,c(2:5)],Level=c("community","bin","bin.wt"),rbind(stev,stevk,stevkw),stringsAsFactors = FALSE)
-  
   
   if(with.competition)
   {
@@ -282,22 +268,12 @@ time.code=format(Sys.time(),"%y%m%d%H%M")
 save.file(perfm,filename = paste0("iCAMP.Perform.Summary.",time.code),folder = wdm)
 
 # End #
-
 ```
 
-```{r MANUALLY PERFORM iCAMP}
+```{r perform iCAMP manually}
 
-phylo.rand.scale="within.bin";taxa.rand.scale="across.all";phylo.metric="bMPD"
-ds=0.2;bin.size=24;sig.index="Confidence"
-correct.special=TRUE;unitsum=TRUE;ses.cut=1.96;rc.cut=0.95;conf.cut=0.975
-
-nworker=4 # parallel thread number
-dirpattern="d0" # set some pattern if you want to test the performance with a certain type of simulated situations
-
-#################
-
-sim.file = here("data", "processed", "simulatedData", "NoComp", "BMb12d02.S15.Sel50Disp25Drift25.comm.tree.pd.ABP.rda")
-psdata_INIT = readRDS(here("data", "processed" , "for_iCAMP", "YXIN_psdata_INIT.rds"))
+sim.file = here("data", "processed", "simulatedData", "NoComp", "BMb3d02", "BMb3d02.S9.Sel75Drift25.comm.tree.pd.ABP.rda")
+psdata_YXIN = readRDS(here("data", "processed" , "for_iCAMP", "YXIN_psdata_lowN.rds"))
 
 # assign comm, pd, tree, and ABP from the rda file/object
 simd=lazyopen(sim.file)
@@ -308,61 +284,5 @@ ABP=simd$ABP
 treat = data.frame(sampname = c(paste0("Almere", 1:5), paste0("Bath", 1:5))) %>%
   mutate(sludge_source = str_extract(sampname, "^[A-Za-z]+")
   )
-clas = as.data.frame(tax_table(psdata_INIT)) 
-
-# Convert to data.frame and set rownames
-treat_df <- as.data.frame(treat)
-rownames(treat_df) <- treat_df$sampname
-treat_df$sampname <- NULL  # Optional: remove sampname column since it's now rownames
-
-# check
-sampid.check = match.name(rn.list=list(comm=comm, treat=treat_df))
-# for the example data, the output should be All match very well.
-# for your data files, if you have not matched their IDs, the unmatched samples will be removed.
-treat = sampid.check$treat
-comm = sampid.check$comm
-comm = comm[,colSums(comm)>0,drop=FALSE] # if some unmatched samples were removed, some OTUs may become ghosts, then you may use this line to remove them if necessary.
-
-### Match OTU IDs in OTU table and tree file
-
-spid.check = match.name(cn.list=list(comm=comm), rn.list = list(clas=clas),
-                         tree.list = list(tree=tree))
-# for the example data, the output should be "All match very well".
-# for your data files, if you have not matched the IDs before, the unmatched OTUs will be removed.
-comm = spid.check$comm
-clas = spid.check$clas
-tree = spid.check$tree
-
-wd = "C:/Dea/Master/Internship/Microbial ecology of PHA production from activated sludge/ENAT_CommAssembly/data/processed/simulatedData/NoComp/bBMb12d02.S15.Sel50Disp25Drift25.pdbig"
-setwd(wd)
-getwd()
-
-pd.big=list()
-pd.big$tip.label=lazyopen(paste0(wd, "/pd.taxon.name.csv"))
-pd.big$pd.wd=wd
-pd.big$pd.file="pd.desc"
-pd.big$pd.name.file= "pd.taxon.name.csv"
-
-
-icamp.res=icamp.big(comm=comm,pd.desc=pd.big$pd.file, pd.spname=pd.big$tip.label, 
-                      pd.wd=pd.big$pd.wd,rand=10,tree=tree,
-                      prefix=prefix,ds=ds,pd.cut=NA,sp.check=TRUE,
-                      phylo.rand.scale=phylo.rand.scale,taxa.rand.scale=taxa.rand.scale,
-                      phylo.metric=phylo.metric,sig.index=sig.index,
-                      bin.size.limit=bin.size,nworker=nworker,
-                      rtree.save=FALSE,detail.save=TRUE,qp.save=TRUE,detail.null=TRUE,
-                      ignore.zero=TRUE,output.wd=pd.wd,
-                      correct.special=correct.special,unit.sum=unit.sum,
-                      special.method="depend",ses.cut = ses.cut,rc.cut = rc.cut,
-                      conf.cut=conf.cut,omit.option="no",meta.ab=NULL)
-
-
-
-```
-
-```{r}
-
-# evaluation result
-eval = load("C:/Dea/Master/Internship/Microbial ecology of PHA production from activated sludge/ENAT_CommAssembly/data/processed/simulatedData/NoComp/bBMb12d02.S15.Sel50Disp25Drift25.pdbig/bBMb12d02.S15.Sel50Disp25Drift25.iCAMP.evaluate.rda")
 
 ```

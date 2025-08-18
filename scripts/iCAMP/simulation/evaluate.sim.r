@@ -2,8 +2,7 @@ evaluate.sim<-function(icamp.res.detail,ABP,comm,sel=FALSE)
 {
   icbin=iCAMP::icamp.bins(icamp.detail = icamp.res.detail)
   Wtuvk=icbin$Wtuvk
-  head(Wtuvk)
-  pairsamps=Wtuvk[,c("name1","name2"),drop=FALSE]
+  pairsamps=Wtuvk[,c("samp1","samp2"),drop=FALSE]
   head(pairsamps)
   pron=c("HoS","HeS","HD","DL","DR")
   if(sel){pron2=c("Sel","HD","DL","DR")}
@@ -14,21 +13,19 @@ evaluate.sim<-function(icamp.res.detail,ABP,comm,sel=FALSE)
                 {
                   if(sel)
                   {
-                    cbind(name1=pairsamps[uv,1],name2=pairsamps[uv,2],species=rownames(ABP),ptype=ABP[,2:3])
+                    cbind(samp1=pairsamps[uv,1],samp2=pairsamps[uv,2],species=rownames(ABP),ptype=ABP[,2:3])
                   }else{
-                    cbind(name1=pairsamps[uv,1],name2=pairsamps[uv,2],species=rownames(ABP),ptype=ABP[,2])
+                    cbind(samp1=pairsamps[uv,1],samp2=pairsamps[uv,2],species=rownames(ABP),ptype=ABP[,2])
                   }
                 })
   Puvi.m1=Reduce(rbind,Puvi.l1)
-  env1=substr(Puvi.m1[,1],1,1)
-  env2=substr(Puvi.m1[,2],1,1)
-  site1=substr(Puvi.m1[,1],2,2)
-  site2=substr(Puvi.m1[,2],2,2)
+  sludge_source1=str_extract(Puvi.m1[,1], "^[A-Za-z]+")
+  sludge_source2=str_extract(Puvi.m1[,2], "^[A-Za-z]+")
   Pexp.uvi=rep(NA,nrow(Puvi.m1))
-  Pexp.uvi[which((Puvi.m1[,4]=="Selection")&(env1==env2))]="HoS"
-  Pexp.uvi[which((Puvi.m1[,4]=="Selection")&(env1!=env2))]="HeS"
-  Pexp.uvi[which((Puvi.m1[,4]=="Dispersal")&(site1==site2))]="HD"
-  Pexp.uvi[which((Puvi.m1[,4]=="Dispersal")&(site1!=site2))]="DL"
+  Pexp.uvi[which((Puvi.m1[,4]=="Selection")&(sludge_source1==sludge_source2))]="HoS"
+  Pexp.uvi[which((Puvi.m1[,4]=="Selection")&(sludge_source1!=sludge_source2))]="HeS"
+  Pexp.uvi[which((Puvi.m1[,4]=="Dispersal")&(sludge_source1==sludge_source2))]="HD"
+  Pexp.uvi[which((Puvi.m1[,4]=="Dispersal")&(sludge_source1!=sludge_source2))]="DL"
   Pexp.uvi[which(Puvi.m1[,4]=="Drift")]="DR"
   if(sel)
   {
@@ -40,7 +37,7 @@ evaluate.sim<-function(icamp.res.detail,ABP,comm,sel=FALSE)
   sp.bin=icamp.res.detail$taxabin$sp.bin[,3,drop=FALSE]
   bin.uvi=sp.bin[match(Puvi.m1[,3],rownames(sp.bin)),1]
   samp2.uvi=paste0(Puvi.m1[,1],"__",Puvi.m1[,2])
-  samp2.Wtuvk=paste0(Wtuvk[,"name1"],"__",Wtuvk[,"name2"])
+  samp2.Wtuvk=paste0(Wtuvk[,"samp1"],"__",Wtuvk[,"samp2"])
   Pobs.uvi=Wtuvk[cbind(match(samp2.uvi,samp2.Wtuvk),match(paste0("bin",bin.uvi),colnames(Wtuvk)))]
   if(sel){Pobs2.uvi=Pobs.uvi;Pobs2.uvi[which(Pobs.uvi %in% c("HoS","HeS"))]="Sel"}
   Puvi=data.frame(Puvi.m1,Abundance=Ab.uvi,ExpectedPuvi=Pexp.uvi,ObsPuvi=Pobs.uvi,stringsAsFactors = FALSE)
@@ -105,7 +102,7 @@ evaluate.sim<-function(icamp.res.detail,ABP,comm,sel=FALSE)
   Puvk.l1=lapply(1:nrow(pairsamps),
                  function(uv)
                  {
-                   cbind(name1=pairsamps[uv,1],name2=pairsamps[uv,2],bin=bins)
+                   cbind(samp1=pairsamps[uv,1],samp2=pairsamps[uv,2],bin=bins)
                  })
   Puvk.m1=Reduce(rbind,Puvk.l1)
   bin.ra=icamp.res.detail$bin.weight
@@ -236,14 +233,14 @@ evaluate.sim<-function(icamp.res.detail,ABP,comm,sel=FALSE)
   
   # 3 # Each plot and each comparison between plots
   # 3.1 # bin level
-  pairplots=c("HAHA","HBHB","LALA","LBLB","HAHB","HALA","HALB","HBLA","HBLB","LALB")
-  plot2.uvk=comb2m(substr(Puvk[,1],1,2),substr(Puvk[,2],1,2),pairplots,sep="")
-  Pgk.m1=data.frame(plots=rep(pairplots,each=length(bins)),bin=rep(bins,times=length(pairplots)))
+  sscomb=c("AlmereAlmere","BathBath","AlmereBath") # sludgesource combination
+  ss2.uvk=comb2m(substr(Puvk[,1],1,2),substr(Puvk[,2],1,2),sscomb,sep="")
+  Pgk.m1=data.frame(plots=rep(sscomb,each=length(bins)),bin=rep(bins,times=length(sscomb)))
   
   Pexpobs.gk=t(sapply(1:nrow(Pgk.m1),
                    function(i)
                    {
-                     idik=which(plot2.uvk==Pgk.m1[i,1] & Puvk[,"bin"]==Pgk.m1[i,2])
+                     idik=which(ss2.uvk==Pgk.m1[i,1] & Puvk[,"bin"]==Pgk.m1[i,2])
                      out.exp=colSums(Puvk[idik,match(paste0(pron,".PtExpect"),colnames(Puvk))]*Puvk$RelativeAbundance[idik])/sum(Puvk$RelativeAbundance[idik])
                      out.obs=qp.ab(process.v = Puvk$ObsPuvk[idik],ab.v = Puvk$RelativeAbundance[idik])
                      c(RA.bin=sum(Puvk$RelativeAbundance[idik]),out.exp,out.obs)
@@ -256,13 +253,13 @@ evaluate.sim<-function(icamp.res.detail,ABP,comm,sel=FALSE)
   }
   
   # 3.2 # community level
-  Pexpobs.g=t(sapply(1:length(pairplots),
+  Pexpobs.g=t(sapply(1:length(sscomb),
                      function(i)
                      {
-                       idi=which(Pgk$plots==pairplots[i])
+                       idi=which(Pgk$plots==sscomb[i])
                        colSums(Pgk[idi,4:ncol(Pgk)]*Pgk$RA.bin[idi])/sum(Pgk$RA.bin[idi])
                      }))
-  Pg=data.frame(plots=pairplots,Pexpobs.g,stringsAsFactors = FALSE)
+  Pg=data.frame(plots=sscomb,Pexpobs.g,stringsAsFactors = FALSE)
   
   output=list(Pg=Pg,Pgk=Pgk,Puv=Puv,Puvk=Puvk,Puvi=Puvi,
               TNPuv=Wtuv.perf,TNPuvk=Wtuvk.perf,TNPuvi=Puvi.perf)
